@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   PlayIcon,
   PauseIcon,
@@ -12,7 +12,10 @@ import {
   CopyIcon,
   FileIcon,
   CheckIcon,
-  SparklesIcon
+  Volume2Icon,
+  VolumeXIcon,
+  MaximizeIcon,
+  MinimizeIcon
 } from '@/components/ui/Icons'
 
 interface DemoVideoModalProps {
@@ -24,53 +27,174 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
   const [isPlaying, setIsPlaying] = useState(true)
   const [progress, setProgress] = useState(0) // 0 to 100
   const [copiedLink, setCopiedLink] = useState(false)
-  const animRef = useRef<NodeJS.Timeout | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(true)
+  const [activeSpeech, setActiveSpeech] = useState('')
 
-  // 14 seconds total loop:
-  // 0% - 32% (0s-4.5s): Phase 1 - Select & Drag-Drop File
-  // 32% - 70% (4.5s-9.8s): Phase 2 - 256-bit Encrypted Stream Upload
-  // 70% - 100% (9.8s-14s): Phase 3 - Instant Link Generated & 1-Click Copy
+  const modalRef = useRef<HTMLDivElement>(null)
+  const lastTimeRef = useRef<number | null>(null)
+  const animFrameRef = useRef<number | null>(null)
+  const currentChapterRef = useRef<number>(0)
+  const audioCtxRef = useRef<AudioContext | null>(null)
+
+  // Voice Narration handler using Web Speech Synthesis
+  const speakNarration = useCallback((text: string) => {
+    if (!voiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return
+
+    try {
+      window.speechSynthesis.cancel() // Cancel ongoing speech
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.rate = 1.02
+      utterance.pitch = 1.0
+      utterance.volume = 0.95
+
+      // Pick a natural voice if available
+      const voices = window.speechSynthesis.getVoices()
+      const naturalVoice = voices.find(v => (v.name.includes('Natural') || v.name.includes('Google') || v.lang.startsWith('en')) && !v.name.includes('Zira'))
+      if (naturalVoice) utterance.voice = naturalVoice
+
+      utterance.onstart = () => setActiveSpeech(text)
+      utterance.onend = () => setActiveSpeech('')
+      utterance.onerror = () => setActiveSpeech('')
+
+      window.speechSynthesis.speak(utterance)
+    } catch (e) {
+      console.warn('Speech synthesis not supported or blocked:', e)
+    }
+  }, [voiceEnabled])
+
+  // Play subtle sound effects with Web Audio API
+  const playSoundEffect = useCallback((type: 'drop' | 'chime') => {
+    if (!voiceEnabled || typeof window === 'undefined') return
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+      }
+      const ctx = audioCtxRef.current
+      if (ctx.state === 'suspended') ctx.resume()
+
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+
+      if (type === 'drop') {
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(180, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.12)
+        gain.gain.setValueAtTime(0.3, ctx.currentTime)
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.12)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.12)
+      } else if (type === 'chime') {
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime) // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08) // A5
+        gain.gain.setValueAtTime(0.25, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.4)
+      }
+    } catch (e) {}
+  }, [voiceEnabled])
+
+  // Fullscreen toggle handler
+  const toggleFullscreen = useCallback(() => {
+    if (!modalRef.current) {
+      setIsFullscreen(prev => !prev)
+      return
+    }
+
+    if (!document.fullscreenElement) {
+      modalRef.current.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(() => setIsFullscreen(true))
+    } else {
+      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(() => setIsFullscreen(false))
+    }
+  }, [])
+
+  // Listen for fullscreen change events (e.g. Esc key pressed)
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFsChange)
+    return () => document.removeEventListener('fullscreenchange', handleFsChange)
+  }, [])
+
+  // 60FPS Ultra-Smooth Animation Loop using requestAnimationFrame
   useEffect(() => {
     if (!isOpen) {
       setIsPlaying(true)
       setProgress(0)
       setCopiedLink(false)
-      if (animRef.current) clearInterval(animRef.current)
+      lastTimeRef.current = null
+      currentChapterRef.current = 0
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel()
       return
     }
 
     if (!isPlaying) {
-      if (animRef.current) clearInterval(animRef.current)
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.pause()
       return
     }
 
-    const totalDuration = 14000 // 14s
-    const intervalMs = 40
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
+      window.speechSynthesis.resume()
+    }
 
-    animRef.current = setInterval(() => {
+    const totalDurationMs = 14000 // 14s
+
+    const stepFrame = (timestamp: number) => {
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp
+      const delta = timestamp - lastTimeRef.current
+      lastTimeRef.current = timestamp
+
       setProgress(prev => {
-        const next = prev + (intervalMs / totalDuration) * 100
+        const next = prev + (delta / totalDurationMs) * 100
+
+        // Trigger voice narrations at specific milestones
+        if (next < 32 && currentChapterRef.current !== 1) {
+          currentChapterRef.current = 1
+          speakNarration('Welcome to DropLync. Simply drag and drop any file up to 10 gigabytes into the dropzone.')
+        } else if (next >= 32 && next < 70 && currentChapterRef.current !== 2) {
+          currentChapterRef.current = 2
+          playSoundEffect('drop')
+          speakNarration('DropLync instantly streams your file in 256-bit encrypted chunks with zero speed limits.')
+        } else if (next >= 70 && currentChapterRef.current !== 3) {
+          currentChapterRef.current = 3
+          playSoundEffect('chime')
+          speakNarration('Transfer complete! Click Copy Link to share your encrypted file with anyone.')
+        }
+
+        if (next >= 82 && !copiedLink) {
+          setCopiedLink(true)
+        } else if (next < 82 && copiedLink) {
+          setCopiedLink(false)
+        }
+
         if (next >= 100) {
+          currentChapterRef.current = 0
           setCopiedLink(false)
           return 0
         }
-        if (next >= 82) {
-          setCopiedLink(true)
-        } else {
-          setCopiedLink(false)
-        }
         return next
       })
-    }, intervalMs)
+
+      animFrameRef.current = requestAnimationFrame(stepFrame)
+    }
+
+    animFrameRef.current = requestAnimationFrame(stepFrame)
 
     return () => {
-      if (animRef.current) clearInterval(animRef.current)
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
     }
-  }, [isOpen, isPlaying])
+  }, [isOpen, isPlaying, speakNarration, playSoundEffect, copiedLink])
 
   if (!isOpen) return null
 
-  // Calculate cursor positions & phases based on progress
+  // Calculate smooth cursor positions & state
   let cursorX = 50
   let cursorY = 50
   let cursorClicked = false
@@ -80,50 +204,52 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
 
   if (progress < 32) {
     currentPhase = 1
-    // Phase 1: Move to file, drag into dropzone
     const p1 = progress / 32
-    if (p1 < 0.3) {
-      // Move cursor towards file
-      cursorX = 20 + p1 * 30
-      cursorY = 75 - p1 * 20
-    } else if (p1 >= 0.3 && p1 < 0.75) {
-      // Dragging file into center dropzone
+    if (p1 < 0.28) {
+      // Smooth movement towards file
+      cursorX = 18 + p1 * 34
+      cursorY = 78 - p1 * 22
+    } else if (p1 >= 0.28 && p1 < 0.76) {
+      // Smooth dragging of file into dropzone center
       isDraggingFile = true
       cursorClicked = true
-      const dragP = (p1 - 0.3) / 0.45
-      cursorX = 29 + dragP * 21 // moves from 29% to 50%
-      cursorY = 69 - dragP * 24 // moves from 69% to 45%
+      const dragRatio = (p1 - 0.28) / 0.48
+      cursorX = 27.5 + dragRatio * 22.5
+      cursorY = 71.8 - dragRatio * 26.8
     } else {
-      // Dropped into dropzone, clicking start upload
+      // Released into dropzone
       cursorX = 50
-      cursorY = 48
+      cursorY = 45
       cursorClicked = p1 > 0.88
     }
   } else if (progress >= 32 && progress < 70) {
     currentPhase = 2
-    // Phase 2: Uploading stream
     const p2 = (progress - 32) / 38
     uploadPercent = Math.min(100, Math.round(p2 * 100))
-    // Cursor hovers peacefully over telemetry
-    cursorX = 65 + Math.sin(p2 * Math.PI) * 4
-    cursorY = 55 + Math.cos(p2 * Math.PI) * 4
+    // Smooth wandering cursor
+    cursorX = 64 + Math.sin(p2 * Math.PI * 2) * 5
+    cursorY = 52 + Math.cos(p2 * Math.PI * 2) * 3
   } else {
     currentPhase = 3
-    // Phase 3: Link generated, cursor moves to Copy Link button and clicks
     const p3 = (progress - 70) / 30
-    if (p3 < 0.4) {
-      cursorX = 50 + p3 * 50
-      cursorY = 50 + p3 * 20
+    if (p3 < 0.38) {
+      cursorX = 50 + p3 * 52
+      cursorY = 48 + p3 * 22
     } else {
       cursorX = 70
-      cursorY = 58
-      cursorClicked = p3 > 0.45
+      cursorY = 57
+      cursorClicked = p3 > 0.42
     }
   }
 
   function handleJump(targetProgress: number) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
     setProgress(targetProgress)
+    currentChapterRef.current = 0
     setCopiedLink(targetProgress >= 82)
+    lastTimeRef.current = performance.now()
   }
 
   return (
@@ -132,26 +258,29 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
         position: 'fixed',
         inset: 0,
         zIndex: 99999,
-        background: 'rgba(2, 4, 10, 0.88)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: 'rgba(2, 4, 10, 0.92)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: isFullscreen ? 0 : '16px',
         animation: 'fadeIn 200ms ease forwards'
       }}
       onClick={onClose}
     >
       <div
+        ref={modalRef}
         className="glass-panel"
         style={{
-          width: '100%',
-          maxWidth: 780,
-          background: '#070b16',
-          borderRadius: 22,
-          border: '1.5px solid var(--border-glow)',
-          boxShadow: 'var(--glass-shadow), 0 30px 80px rgba(0, 0, 0, 0.7)',
+          width: isFullscreen ? '100vw' : '100%',
+          maxWidth: isFullscreen ? '100vw' : 920,
+          height: isFullscreen ? '100vh' : 'auto',
+          maxHeight: isFullscreen ? '100vh' : '92vh',
+          background: '#060913',
+          borderRadius: isFullscreen ? 0 : 24,
+          border: isFullscreen ? 'none' : '1.5px solid var(--border-glow)',
+          boxShadow: isFullscreen ? 'none' : 'var(--glass-shadow), 0 35px 90px rgba(0, 0, 0, 0.8)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -162,13 +291,14 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
         {/* Browser Top Window Bar */}
         <div
           style={{
-            padding: '10px 16px',
-            background: '#0d1322',
+            padding: '12px 18px',
+            background: '#0b1120',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 12
+            gap: 12,
+            flexShrink: 0
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
@@ -184,64 +314,108 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: 8,
-                padding: '3px 12px',
+                padding: '4px 14px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                fontSize: '0.72rem',
+                fontSize: '0.74rem',
                 color: '#94a3b8',
                 fontFamily: 'monospace'
               }}
             >
               <span style={{ color: '#22c55e' }}>🔒</span>
-              <span>https://droplync.vercel.app</span>
+              <span>https://droplync.vercel.app · 10GB Transfer Walkthrough</span>
             </div>
           </div>
 
+          {/* Window action controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span
-              style={{
-                fontSize: '0.68rem',
-                fontWeight: 800,
-                color: '#38bdf8',
-                background: 'rgba(56, 189, 248, 0.12)',
-                padding: '3px 8px',
-                borderRadius: 6,
-                border: '1px solid rgba(56, 189, 248, 0.25)'
+            {/* Voice Audio Toggle Button */}
+            <button
+              onClick={() => {
+                if (voiceEnabled) {
+                  if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel()
+                  setVoiceEnabled(false)
+                } else {
+                  setVoiceEnabled(true)
+                  currentChapterRef.current = 0
+                }
               }}
+              style={{
+                background: voiceEnabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                border: voiceEnabled ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                color: voiceEnabled ? '#22c55e' : '#94a3b8',
+                borderRadius: 8,
+                padding: '4px 10px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+              title={voiceEnabled ? 'Mute Voice Narration' : 'Enable Voice Narration'}
             >
-              1080p 60FPS
-            </span>
+              {voiceEnabled ? <Volume2Icon size={14} /> : <VolumeXIcon size={14} />}
+              <span>{voiceEnabled ? 'Voice: ON' : 'Voice: OFF'}</span>
+            </button>
+
+            {/* Laptop Fullscreen Button */}
+            <button
+              onClick={toggleFullscreen}
+              style={{
+                background: isFullscreen ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255, 255, 255, 0.05)',
+                border: isFullscreen ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                color: isFullscreen ? '#38bdf8' : '#94a3b8',
+                borderRadius: 8,
+                padding: '4px 10px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+              title={isFullscreen ? 'Exit Fullscreen' : 'Laptop Full Screen'}
+            >
+              {isFullscreen ? <MinimizeIcon size={14} /> : <MaximizeIcon size={14} />}
+              <span>{isFullscreen ? 'Exit Full' : 'Full Screen'}</span>
+            </button>
+
+            {/* Close Button */}
             <button
               onClick={onClose}
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-3)',
+                color: '#94a3b8',
                 cursor: 'pointer',
                 padding: 4,
                 display: 'flex',
-                alignItems: 'center'
+                alignItems: 'center',
+                borderRadius: 6
               }}
+              title="Close modal"
             >
-              <XIcon size={18} />
+              <XIcon size={20} />
             </button>
           </div>
         </div>
 
-        {/* Phase Step Headers */}
+        {/* Phase Step Navigation */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            background: '#090e1c'
+            background: '#070b16',
+            flexShrink: 0
           }}
         >
           {[
-            { phase: 1 as const, time: '0s-4s', label: '1. Select 10GB Files', jump: 0 },
-            { phase: 2 as const, time: '4s-9s', label: '2. 256-Bit Stream Upload', jump: 36 },
-            { phase: 3 as const, time: '9s-14s', label: '3. Instant Link & 1-Click Copy', jump: 72 }
+            { phase: 1 as const, label: '1. Select 10GB Files', jump: 0 },
+            { phase: 2 as const, label: '2. Direct 256-Bit Stream', jump: 35 },
+            { phase: 3 as const, label: '3. Instant Link & 1-Click Copy', jump: 72 }
           ].map(item => {
             const active = currentPhase === item.phase
             return (
@@ -249,7 +423,7 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                 key={item.phase}
                 onClick={() => handleJump(item.jump)}
                 style={{
-                  padding: '9px 12px',
+                  padding: '10px 14px',
                   background: active ? 'rgba(37,99,235,0.12)' : 'transparent',
                   border: 'none',
                   borderBottom: active ? '2.5px solid #38bdf8' : '2.5px solid transparent',
@@ -258,7 +432,7 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                   transition: 'all 150ms ease'
                 }}
               >
-                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: active ? '#38bdf8' : '#94a3b8' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: active ? '#38bdf8' : '#94a3b8' }}>
                   {item.label}
                 </div>
               </button>
@@ -266,14 +440,15 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
           })}
         </div>
 
-        {/* Video Canvas Stage (16:9 Screen Player) */}
+        {/* Video Canvas Stage (Widescreen 16:9 Cinema Player) */}
         <div
           style={{
             position: 'relative',
+            flex: 1,
             width: '100%',
-            aspectRatio: '16 / 9',
-            maxHeight: 410,
-            background: 'radial-gradient(ellipse at 50% 30%, #0f1c3f 0%, #050813 100%)',
+            aspectRatio: isFullscreen ? 'auto' : '16 / 9',
+            minHeight: isFullscreen ? 0 : 380,
+            background: 'radial-gradient(ellipse at 50% 25%, #0e1a38 0%, #03060e 100%)',
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
@@ -283,18 +458,18 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
           }}
           onClick={() => setIsPlaying(!isPlaying)}
         >
-          {/* Animated Background Mesh Orbs */}
+          {/* Animated Background Glow */}
           <div
             style={{
               position: 'absolute',
-              width: 260,
-              height: 260,
+              width: 320,
+              height: 320,
               borderRadius: '50%',
               background: '#2563eb',
-              filter: 'blur(80px)',
-              opacity: 0.25,
-              top: '10%',
-              left: '30%',
+              filter: 'blur(90px)',
+              opacity: 0.22,
+              top: '15%',
+              left: '35%',
               pointerEvents: 'none'
             }}
           />
@@ -303,75 +478,102 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
           <div
             style={{
               position: 'absolute',
-              top: 14,
-              left: 16,
+              top: 16,
+              left: 18,
               zIndex: 10,
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              background: 'rgba(0,0,0,0.6)',
-              backdropFilter: 'blur(10px)',
-              padding: '4px 10px',
+              gap: 8,
+              background: 'rgba(0,0,0,0.65)',
+              backdropFilter: 'blur(12px)',
+              padding: '5px 12px',
               borderRadius: 20,
               border: '1px solid rgba(255,255,255,0.12)'
             }}
           >
             <span
               style={{
-                width: 7,
-                height: 7,
+                width: 8,
+                height: 8,
                 borderRadius: '50%',
                 background: '#ef4444',
-                boxShadow: '0 0 8px #ef4444',
+                boxShadow: '0 0 10px #ef4444',
                 animation: 'pulseDot 1.5s infinite'
               }}
             />
-            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
-              SCREENTOUR · DEMO
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
+              60 FPS SCREENTOUR
             </span>
           </div>
+
+          {/* Real-time Subtitles Banner */}
+          {activeSpeech && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 20,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 15,
+                background: 'rgba(0, 0, 0, 0.82)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: 12,
+                padding: '6px 18px',
+                color: '#ffffff',
+                fontSize: '0.84rem',
+                fontWeight: 700,
+                textAlign: 'center',
+                maxWidth: '85%',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                animation: 'fadeIn 200ms ease'
+              }}
+            >
+              🎙️ {activeSpeech}
+            </div>
+          )}
 
           {/* ══════ PHASE 1: DRAG & DROP SELECTION ══════ */}
           {currentPhase === 1 && (
             <div
               style={{
-                width: '88%',
-                maxWidth: 480,
+                width: '85%',
+                maxWidth: 520,
                 textAlign: 'center',
                 position: 'relative',
-                animation: 'fadeIn 250ms ease'
+                animation: 'fadeIn 200ms ease'
               }}
             >
               <div
                 style={{
                   border: isDraggingFile ? '2.5px dashed #38bdf8' : '2px dashed rgba(37,99,235,0.5)',
-                  borderRadius: 20,
-                  padding: '36px 20px',
-                  background: isDraggingFile ? 'rgba(56, 189, 248, 0.12)' : 'rgba(15, 23, 42, 0.75)',
-                  boxShadow: isDraggingFile ? '0 0 35px rgba(56,189,248,0.3)' : '0 10px 30px rgba(0,0,0,0.4)',
-                  transition: 'all 200ms ease'
+                  borderRadius: 24,
+                  padding: '42px 24px',
+                  background: isDraggingFile ? 'rgba(56, 189, 248, 0.14)' : 'rgba(15, 23, 42, 0.8)',
+                  boxShadow: isDraggingFile ? '0 0 40px rgba(56,189,248,0.35)' : '0 12px 35px rgba(0,0,0,0.5)',
+                  transition: 'all 150ms ease'
                 }}
               >
                 <div
                   style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 16,
+                    width: 58,
+                    height: 58,
+                    borderRadius: 18,
                     background: 'linear-gradient(135deg, #2563eb, #0284c7)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    margin: '0 auto 12px',
-                    boxShadow: '0 8px 22px rgba(37,99,235,0.45)'
+                    margin: '0 auto 14px',
+                    boxShadow: '0 10px 25px rgba(37,99,235,0.5)'
                   }}
                 >
-                  <UploadCloudIcon size={28} color="white" />
+                  <UploadCloudIcon size={32} color="white" />
                 </div>
 
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f8fafc', marginBottom: 4 }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f8fafc', marginBottom: 6 }}>
                   {isDraggingFile ? 'Release to Drop 10GB File' : 'Drop your files to start transfer'}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                <div style={{ fontSize: '0.86rem', color: '#94a3b8' }}>
                   Send up to <strong style={{ color: '#38bdf8' }}>10GB Free</strong> · End-to-End Encrypted
                 </div>
               </div>
@@ -381,26 +583,26 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                 style={{
                   position: 'absolute',
                   left: isDraggingFile ? '50%' : '14%',
-                  top: isDraggingFile ? '50%' : '80%',
+                  top: isDraggingFile ? '50%' : '82%',
                   transform: 'translate(-50%, -50%)',
                   background: 'linear-gradient(135deg, #1e293b, #0f172a)',
                   border: '1.5px solid #38bdf8',
-                  borderRadius: 12,
-                  padding: '8px 14px',
+                  borderRadius: 14,
+                  padding: '10px 16px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 8,
-                  boxShadow: '0 12px 28px rgba(0,0,0,0.6)',
+                  gap: 10,
+                  boxShadow: '0 15px 35px rgba(0,0,0,0.7)',
                   pointerEvents: 'none',
                   zIndex: 20,
-                  transition: 'all 120ms linear'
+                  transition: 'all 80ms linear'
                 }}
               >
-                <FileIcon size={18} color="#38bdf8" />
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ffffff' }}>
-                  Video_Production_Master_4.8GB.zip
+                <FileIcon size={20} color="#38bdf8" />
+                <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#ffffff' }}>
+                  Video_Master_Edit_4.8GB.zip
                 </span>
-                <span style={{ fontSize: '0.7rem', color: '#22c55e', fontWeight: 800 }}>4.8 GB</span>
+                <span style={{ fontSize: '0.74rem', color: '#22c55e', fontWeight: 800 }}>4.8 GB</span>
               </div>
             </div>
           )}
@@ -409,45 +611,45 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
           {currentPhase === 2 && (
             <div
               style={{
-                width: '88%',
-                maxWidth: 480,
+                width: '85%',
+                maxWidth: 520,
                 textAlign: 'center',
                 position: 'relative',
-                animation: 'fadeIn 250ms ease'
+                animation: 'fadeIn 200ms ease'
               }}
             >
               <div
                 style={{
-                  padding: '28px 24px',
-                  borderRadius: 22,
-                  border: '1.5px solid rgba(56,189,248,0.4)',
-                  background: 'rgba(15, 23, 42, 0.85)',
-                  boxShadow: '0 12px 40px rgba(37,99,235,0.25)'
+                  padding: '34px 28px',
+                  borderRadius: 24,
+                  border: '1.5px solid rgba(56,189,248,0.45)',
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  boxShadow: '0 15px 50px rgba(37,99,235,0.3)'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#f8fafc' }}>
-                      Streaming Chunked Payload...
+                    <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f8fafc' }}>
+                      Streaming Direct Chunks...
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>
-                      AES-256 GCM · Line Speed: <strong style={{ color: '#38bdf8' }}>96.4 MB/s</strong>
+                    <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginTop: 3 }}>
+                      AES-256 GCM · Line Speed: <strong style={{ color: '#38bdf8' }}>112.5 MB/s</strong>
                     </div>
                   </div>
-                  <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#38bdf8' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#38bdf8' }}>
                     {uploadPercent}%
                   </div>
                 </div>
 
-                {/* Animated Glowing Progress Bar */}
+                {/* Glowing Smooth Progress Bar */}
                 <div
                   style={{
-                    height: 12,
+                    height: 14,
                     borderRadius: 999,
                     background: 'rgba(255, 255, 255, 0.1)',
                     overflow: 'hidden',
-                    marginBottom: 16,
-                    border: '1px solid rgba(255,255,255,0.12)'
+                    marginBottom: 18,
+                    border: '1px solid rgba(255,255,255,0.14)'
                   }}
                 >
                   <div
@@ -456,18 +658,18 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                       borderRadius: 999,
                       background: 'linear-gradient(90deg, #2563eb, #0284c7, #00f2fe)',
                       width: `${uploadPercent}%`,
-                      transition: 'width 80ms linear',
-                      boxShadow: '0 0 16px rgba(0,242,254,0.7)'
+                      transition: 'width 40ms linear',
+                      boxShadow: '0 0 20px rgba(0,242,254,0.8)'
                     }}
                   />
                 </div>
 
-                {/* Chunk offset telemetry boxes */}
+                {/* Offset & Telemetry */}
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                    Offset: {(uploadPercent * 48).toFixed(0)}MB / 4800MB
+                  <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                    Uploaded: {((uploadPercent / 100) * 4.8).toFixed(2)} GB / 4.80 GB
                   </span>
-                  <span style={{ fontSize: '0.72rem', color: '#22c55e', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 800 }}>
                     Direct Stream Zero Stalls
                   </span>
                 </div>
@@ -479,44 +681,44 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
           {currentPhase === 3 && (
             <div
               style={{
-                width: '88%',
-                maxWidth: 480,
+                width: '85%',
+                maxWidth: 520,
                 textAlign: 'center',
                 position: 'relative',
-                animation: 'fadeIn 250ms ease'
+                animation: 'fadeIn 200ms ease'
               }}
             >
               <div
                 style={{
-                  padding: '28px 24px',
-                  borderRadius: 22,
+                  padding: '32px 28px',
+                  borderRadius: 24,
                   border: '1.5px solid rgba(34,197,94,0.45)',
-                  background: 'rgba(15, 23, 42, 0.9)',
-                  boxShadow: '0 12px 40px rgba(34,197,94,0.2)'
+                  background: 'rgba(15, 23, 42, 0.92)',
+                  boxShadow: '0 15px 50px rgba(34,197,94,0.25)'
                 }}
               >
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
+                    width: 52,
+                    height: 52,
                     borderRadius: '50%',
                     background: 'rgba(34,197,94,0.15)',
                     border: '2px solid #22c55e',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    margin: '0 auto 10px',
-                    boxShadow: '0 0 20px rgba(34,197,94,0.35)'
+                    margin: '0 auto 12px',
+                    boxShadow: '0 0 24px rgba(34,197,94,0.4)'
                   }}
                 >
-                  <CheckCircleIcon size={26} color="#22c55e" />
+                  <CheckCircleIcon size={28} color="#22c55e" />
                 </div>
 
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f8fafc', marginBottom: 3 }}>
-                  Transfer Link Ready to Share!
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f8fafc', marginBottom: 4 }}>
+                  Transfer Ready to Share!
                 </div>
-                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: 14 }}>
-                  Expires in 7 days · 10GB Payload Encrypted
+                <div style={{ fontSize: '0.84rem', color: '#94a3b8', marginBottom: 16 }}>
+                  Auto-expires in 7 days · 10GB Payload Encrypted
                 </div>
 
                 {/* Instant Link Bar */}
@@ -524,12 +726,12 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    background: '#070b16',
-                    border: copiedLink ? '1.5px solid #22c55e' : '1px solid rgba(255,255,255,0.15)',
+                    gap: 10,
+                    background: '#060a14',
+                    border: copiedLink ? '1.5px solid #22c55e' : '1px solid rgba(255,255,255,0.16)',
                     borderRadius: 14,
-                    padding: '8px 14px',
-                    boxShadow: copiedLink ? '0 0 16px rgba(34,197,94,0.3)' : 'none',
+                    padding: '10px 16px',
+                    boxShadow: copiedLink ? '0 0 20px rgba(34,197,94,0.35)' : 'none',
                     transition: 'all 200ms ease'
                   }}
                 >
@@ -541,7 +743,7 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                       background: 'none',
                       border: 'none',
                       color: copiedLink ? '#22c55e' : '#38bdf8',
-                      fontSize: '0.84rem',
+                      fontSize: '0.88rem',
                       fontWeight: 800,
                       width: '100%',
                       outline: 'none',
@@ -551,23 +753,23 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                   <button
                     className="btn-primary"
                     style={{
-                      padding: '6px 14px',
-                      fontSize: '0.76rem',
+                      padding: '8px 16px',
+                      fontSize: '0.8rem',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: 6,
                       flexShrink: 0,
                       background: copiedLink ? '#16a34a' : '#2563eb'
                     }}
                   >
                     {copiedLink ? (
                       <>
-                        <CheckIcon size={13} color="white" />
+                        <CheckIcon size={14} color="white" />
                         <span>Copied!</span>
                       </>
                     ) : (
                       <>
-                        <CopyIcon size={13} />
+                        <CopyIcon size={14} />
                         <span>Copy Link</span>
                       </>
                     )}
@@ -586,11 +788,11 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
               zIndex: 9999,
               pointerEvents: 'none',
               transform: cursorClicked ? 'scale(0.88)' : 'scale(1)',
-              transition: 'left 80ms linear, top 80ms linear, transform 100ms ease',
-              filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.7))'
+              transition: 'left 40ms linear, top 40ms linear, transform 80ms ease',
+              filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.8))'
             }}
           >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
               <polygon points="0 0 0 20 5.5 15.5 10 24 13 22.5 8.5 14 16 14" fill="#ffffff" stroke="#000000" strokeWidth="1.5" />
             </svg>
             {cursorClicked && (
@@ -599,8 +801,8 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
                   position: 'absolute',
                   top: -2,
                   left: -2,
-                  width: 28,
-                  height: 28,
+                  width: 32,
+                  height: 32,
                   borderRadius: '50%',
                   border: '2px solid rgba(56,189,248,0.8)',
                   animation: 'ping 400ms cubic-bezier(0, 0, 0.2, 1) infinite'
@@ -613,19 +815,20 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
         {/* Video Scrubber & Playback Controls Bar */}
         <div
           style={{
-            padding: '12px 18px',
-            background: '#0d1322',
+            padding: '14px 20px',
+            background: '#0b1120',
             borderTop: '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
             alignItems: 'center',
-            gap: 14
+            gap: 16,
+            flexShrink: 0
           }}
         >
           <button
             onClick={() => setIsPlaying(!isPlaying)}
             style={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: '50%',
               background: '#2563eb',
               border: 'none',
@@ -635,18 +838,16 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 4px 12px rgba(37,99,235,0.45)'
+              boxShadow: '0 4px 14px rgba(37,99,235,0.5)'
             }}
+            title={isPlaying ? 'Pause' : 'Play'}
           >
-            {isPlaying ? <PauseIcon size={16} /> : <PlayIcon size={16} />}
+            {isPlaying ? <PauseIcon size={18} /> : <PlayIcon size={18} />}
           </button>
 
           <button
-            onClick={() => {
-              setProgress(0)
-              setIsPlaying(true)
-            }}
-            title="Replay video"
+            onClick={() => handleJump(0)}
+            title="Replay from beginning"
             style={{
               background: 'none',
               border: 'none',
@@ -657,14 +858,14 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
               padding: 4
             }}
           >
-            <RotateCcwIcon size={17} />
+            <RotateCcwIcon size={18} />
           </button>
 
           {/* Interactive Timeline Bar */}
           <div
             style={{
               flex: 1,
-              height: 7,
+              height: 8,
               borderRadius: 999,
               background: 'rgba(255, 255, 255, 0.15)',
               position: 'relative',
@@ -688,7 +889,7 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
             />
           </div>
 
-          <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#94a3b8', minWidth: 46, textAlign: 'right' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94a3b8', minWidth: 50, textAlign: 'right' }}>
             {Math.round((progress / 100) * 14)}s / 14s
           </div>
         </div>
