@@ -28,12 +28,6 @@ function ThemeToggle() {
       title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label="Toggle theme"
     >
-      <span className="theme-toggle-track-icon" style={{ opacity: dark ? 0.35 : 0, color: '#f59e0b' }}>
-        <SunIcon size={13} color="#f59e0b" />
-      </span>
-      <span className="theme-toggle-track-icon" style={{ opacity: dark ? 0 : 0.35, color: '#94a3b8' }}>
-        <MoonIcon size={13} color="#94a3b8" />
-      </span>
       <div className="theme-toggle-thumb">
         {mounted && (
           dark ? (
