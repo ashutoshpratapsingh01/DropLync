@@ -5,6 +5,7 @@ import { formatBytes } from '@/lib/utils'
 import Background3D from '@/components/Background3D'
 import Tilt3D from '@/components/ui/Tilt3D'
 import UpgradeModal from '@/components/ui/UpgradeModal'
+import DemoVideoModal from '@/components/DemoVideoModal'
 import Logo from '@/components/Logo'
 import { FREE_LIMIT_BYTES } from '@/lib/plans'
 import {
@@ -26,7 +27,8 @@ import {
   ArrowLeftIcon,
   AlertTriangleIcon,
   SpinnerIcon,
-  BarChartIcon
+  BarChartIcon,
+  PlayIcon
 } from '@/components/ui/Icons'
 
 type UploadFile = {
@@ -79,6 +81,9 @@ export default function LandingClient() {
   // Real-time telemetry
   const [uploadSpeed, setUploadSpeed] = useState<string>('0 MB/s')
   const [eta, setEta] = useState<string>('')
+  
+  // Interactive Video Demo modal
+  const [demoModalOpen, setDemoModalOpen] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -455,13 +460,30 @@ export default function LandingClient() {
 
             {/* Left: Copy & Value Props */}
             <div>
-              <div className="reveal" style={{ marginBottom: 14 }}>
+              <div className="reveal" style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <span className="stat-pill" style={{ padding: '5px 14px', fontSize: '0.8rem', borderColor: 'rgba(37,99,235,0.3)', background: 'rgba(37,99,235,0.08)' }}>
                   <span className="pulse-dot" style={{ width: 7, height: 7 }} />
                   <span style={{ fontWeight: 800, color: 'var(--brand)', letterSpacing: '0.02em' }}>
-                    10GB Free Storage · Direct Chunk Stream
+                    10GB Free Storage · Direct Stream
                   </span>
                 </span>
+                <button
+                  onClick={() => setDemoModalOpen(true)}
+                  className="btn-secondary"
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    borderRadius: 999,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <PlayIcon size={12} color="var(--brand)" />
+                  <span>Watch Demo (14s)</span>
+                </button>
               </div>
 
               <h1 className="reveal reveal-delay-1" style={{ fontSize: 'clamp(2rem, 3.2vw, 2.9rem)', fontWeight: 900, lineHeight: 1.14, marginBottom: 14, letterSpacing: '-0.04em', color: 'var(--text-1)' }}>
@@ -633,6 +655,62 @@ export default function LandingClient() {
           </div>
         </div>
       </footer>
+
+      {/* ── Floating Sample Demo Video Badge (Bottom-Left Corner) ── */}
+      <div
+        className="mobile-hide"
+        style={{
+          position: 'fixed',
+          bottom: 24,
+          left: 24,
+          zIndex: 990,
+          cursor: 'pointer'
+        }}
+        onClick={() => setDemoModalOpen(true)}
+      >
+        <div
+          className="card-hover"
+          style={{
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1.5px solid var(--border-glow)',
+            borderRadius: 999,
+            padding: '7px 16px 7px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            boxShadow: 'var(--glass-shadow), 0 10px 30px rgba(37,99,235,0.22)'
+          }}
+        >
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--brand), #0284c7)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(37,99,235,0.4)',
+              flexShrink: 0
+            }}
+          >
+            <PlayIcon size={13} color="white" />
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-1)', lineHeight: 1.2 }}>
+              Sample Video Demo
+            </div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--brand)', fontWeight: 700 }}>
+              How to upload & get link (14s)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Interactive Video Demo Modal ── */}
+      <DemoVideoModal isOpen={demoModalOpen} onClose={() => setDemoModalOpen(false)} />
 
       {/* ── 3D Upgrade Modal ── */}
       <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} currentFileSizeDisplay={exceededSizeDisplay} currentLimitDisplay="10GB" onSuccess={() => { setUpgradeModalOpen(false); refreshPlan(); }} />
