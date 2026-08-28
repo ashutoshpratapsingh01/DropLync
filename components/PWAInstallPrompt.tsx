@@ -116,29 +116,7 @@ export default function PWAInstallPrompt() {
 
       {/* Floating Installation Banner */}
       {showPrompt && (
-        <div
-          className="reveal"
-          style={{
-            position: 'fixed',
-            bottom: 20,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 999,
-            width: 'calc(100% - 32px)',
-            maxWidth: 440,
-            background: 'var(--glass-bg)',
-            backdropFilter: 'blur(28px)',
-            border: '1.5px solid var(--border-glow)',
-            borderRadius: 20,
-            padding: '14px 18px',
-            boxShadow: 'var(--glass-shadow), 0 12px 40px rgba(37,99,235,0.22)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 14,
-            animation: 'checkPop 400ms var(--ease-spring) forwards'
-          }}
-        >
+        <div className="pwa-banner">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
             <div
               style={{
