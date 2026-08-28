@@ -10,10 +10,9 @@ import {
   ShieldLockIcon,
   CheckCircleIcon,
   CopyIcon,
-  SparklesIcon,
-  ArrowRightIcon,
   FileIcon,
-  CheckIcon
+  CheckIcon,
+  SparklesIcon
 } from '@/components/ui/Icons'
 
 interface DemoVideoModalProps {
@@ -23,19 +22,18 @@ interface DemoVideoModalProps {
 
 export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps) {
   const [isPlaying, setIsPlaying] = useState(true)
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
-  const [progress, setProgress] = useState(0)
-  const [uploadPercent, setUploadPercent] = useState(0)
+  const [progress, setProgress] = useState(0) // 0 to 100
   const [copiedLink, setCopiedLink] = useState(false)
   const animRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Demo playback loop (15 seconds total: 0-5s Step 1, 5-10s Step 2, 10-15s Step 3)
+  // 14 seconds total loop:
+  // 0% - 32% (0s-4.5s): Phase 1 - Select & Drag-Drop File
+  // 32% - 70% (4.5s-9.8s): Phase 2 - 256-bit Encrypted Stream Upload
+  // 70% - 100% (9.8s-14s): Phase 3 - Instant Link Generated & 1-Click Copy
   useEffect(() => {
     if (!isOpen) {
       setIsPlaying(true)
-      setCurrentStep(1)
       setProgress(0)
-      setUploadPercent(0)
       setCopiedLink(false)
       if (animRef.current) clearInterval(animRef.current)
       return
@@ -46,35 +44,21 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
       return
     }
 
-    const totalDuration = 14000 // 14 seconds
-    const intervalMs = 50
+    const totalDuration = 14000 // 14s
+    const intervalMs = 40
 
     animRef.current = setInterval(() => {
       setProgress(prev => {
         const next = prev + (intervalMs / totalDuration) * 100
         if (next >= 100) {
-          // Loop back to start
-          setCurrentStep(1)
-          setUploadPercent(0)
           setCopiedLink(false)
           return 0
         }
-
-        // Determine step based on timeline percentage
-        if (next < 35) {
-          setCurrentStep(1)
-        } else if (next >= 35 && next < 70) {
-          setCurrentStep(2)
-          // Calculate upload percentage (0% to 100%) during step 2
-          const step2Ratio = (next - 35) / 35
-          setUploadPercent(Math.min(100, Math.round(step2Ratio * 100)))
+        if (next >= 82) {
+          setCopiedLink(true)
         } else {
-          setCurrentStep(3)
-          if (next > 82) {
-            setCopiedLink(true)
-          }
+          setCopiedLink(false)
         }
-
         return next
       })
     }, intervalMs)
@@ -86,29 +70,60 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
 
   if (!isOpen) return null
 
-  function jumpToStep(stepNum: 1 | 2 | 3) {
-    setCurrentStep(stepNum)
-    if (stepNum === 1) {
-      setProgress(0)
-      setUploadPercent(0)
-      setCopiedLink(false)
-    } else if (stepNum === 2) {
-      setProgress(36)
-      setUploadPercent(15)
-      setCopiedLink(false)
+  // Calculate cursor positions & phases based on progress
+  let cursorX = 50
+  let cursorY = 50
+  let cursorClicked = false
+  let isDraggingFile = false
+  let uploadPercent = 0
+  let currentPhase: 1 | 2 | 3 = 1
+
+  if (progress < 32) {
+    currentPhase = 1
+    // Phase 1: Move to file, drag into dropzone
+    const p1 = progress / 32
+    if (p1 < 0.3) {
+      // Move cursor towards file
+      cursorX = 20 + p1 * 30
+      cursorY = 75 - p1 * 20
+    } else if (p1 >= 0.3 && p1 < 0.75) {
+      // Dragging file into center dropzone
+      isDraggingFile = true
+      cursorClicked = true
+      const dragP = (p1 - 0.3) / 0.45
+      cursorX = 29 + dragP * 21 // moves from 29% to 50%
+      cursorY = 69 - dragP * 24 // moves from 69% to 45%
     } else {
-      setProgress(71)
-      setUploadPercent(100)
-      setCopiedLink(false)
+      // Dropped into dropzone, clicking start upload
+      cursorX = 50
+      cursorY = 48
+      cursorClicked = p1 > 0.88
+    }
+  } else if (progress >= 32 && progress < 70) {
+    currentPhase = 2
+    // Phase 2: Uploading stream
+    const p2 = (progress - 32) / 38
+    uploadPercent = Math.min(100, Math.round(p2 * 100))
+    // Cursor hovers peacefully over telemetry
+    cursorX = 65 + Math.sin(p2 * Math.PI) * 4
+    cursorY = 55 + Math.cos(p2 * Math.PI) * 4
+  } else {
+    currentPhase = 3
+    // Phase 3: Link generated, cursor moves to Copy Link button and clicks
+    const p3 = (progress - 70) / 30
+    if (p3 < 0.4) {
+      cursorX = 50 + p3 * 50
+      cursorY = 50 + p3 * 20
+    } else {
+      cursorX = 70
+      cursorY = 58
+      cursorClicked = p3 > 0.45
     }
   }
 
-  function handleRestart() {
-    setCurrentStep(1)
-    setProgress(0)
-    setUploadPercent(0)
-    setCopiedLink(false)
-    setIsPlaying(true)
+  function handleJump(targetProgress: number) {
+    setProgress(targetProgress)
+    setCopiedLink(targetProgress >= 82)
   }
 
   return (
@@ -117,9 +132,9 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
         position: 'fixed',
         inset: 0,
         zIndex: 99999,
-        background: 'rgba(6, 9, 18, 0.82)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(2, 4, 10, 0.88)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -132,11 +147,11 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
         className="glass-panel"
         style={{
           width: '100%',
-          maxWidth: 680,
-          background: 'var(--glass-bg)',
-          borderRadius: 24,
+          maxWidth: 780,
+          background: '#070b16',
+          borderRadius: 22,
           border: '1.5px solid var(--border-glow)',
-          boxShadow: 'var(--glass-shadow), 0 25px 60px rgba(0, 0, 0, 0.5)',
+          boxShadow: 'var(--glass-shadow), 0 30px 80px rgba(0, 0, 0, 0.7)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -144,334 +159,416 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Modal Window Header */}
+        {/* Browser Top Window Bar */}
         <div
           style={{
-            padding: '12px 18px',
-            background: 'var(--glass-bg-subtle)',
-            borderBottom: '1px solid var(--border)',
+            padding: '10px 16px',
+            background: '#0d1322',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            gap: 12
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
             <div style={{ display: 'flex', gap: 6 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444' }} />
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#eab308' }} />
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
+              <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#ef4444' }} />
+              <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#eab308' }} />
+              <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#22c55e' }} />
             </div>
-            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-1)' }}>
-              How DropLync Works · 3-Step Video Demo
-            </span>
+
+            {/* Simulated browser URL pill */}
+            <div
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: 8,
+                padding: '3px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: '0.72rem',
+                color: '#94a3b8',
+                fontFamily: 'monospace'
+              }}
+            >
+              <span style={{ color: '#22c55e' }}>🔒</span>
+              <span>https://droplync.vercel.app</span>
+            </div>
           </div>
 
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-3)',
-              cursor: 'pointer',
-              padding: 4,
-              display: 'flex',
-              alignItems: 'center',
-              borderRadius: 6
-            }}
-          >
-            <XIcon size={18} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 800,
+                color: '#38bdf8',
+                background: 'rgba(56, 189, 248, 0.12)',
+                padding: '3px 8px',
+                borderRadius: 6,
+                border: '1px solid rgba(56, 189, 248, 0.25)'
+              }}
+            >
+              1080p 60FPS
+            </span>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-3)',
+                cursor: 'pointer',
+                padding: 4,
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <XIcon size={18} />
+            </button>
+          </div>
         </div>
 
-        {/* Step Tabs Navigation */}
+        {/* Phase Step Headers */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
-            borderBottom: '1px solid var(--border)',
-            background: 'var(--bg)'
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            background: '#090e1c'
           }}
         >
           {[
-            { step: 1 as const, label: '1. Drop 10GB Files', desc: 'Drag & drop zero limits' },
-            { step: 2 as const, label: '2. Direct Stream', desc: 'Chunked 256-bit encryption' },
-            { step: 3 as const, label: '3. Share Link', desc: 'Instant private download' }
+            { phase: 1 as const, time: '0s-4s', label: '1. Select 10GB Files', jump: 0 },
+            { phase: 2 as const, time: '4s-9s', label: '2. 256-Bit Stream Upload', jump: 36 },
+            { phase: 3 as const, time: '9s-14s', label: '3. Instant Link & 1-Click Copy', jump: 72 }
           ].map(item => {
-            const active = currentStep === item.step
+            const active = currentPhase === item.phase
             return (
               <button
-                key={item.step}
-                onClick={() => jumpToStep(item.step)}
+                key={item.phase}
+                onClick={() => handleJump(item.jump)}
                 style={{
-                  padding: '10px 12px',
-                  background: active ? 'rgba(37,99,235,0.08)' : 'transparent',
+                  padding: '9px 12px',
+                  background: active ? 'rgba(37,99,235,0.12)' : 'transparent',
                   border: 'none',
-                  borderBottom: active ? '2.5px solid var(--brand)' : '2.5px solid transparent',
+                  borderBottom: active ? '2.5px solid #38bdf8' : '2.5px solid transparent',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 150ms ease'
                 }}
               >
-                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: active ? 'var(--brand)' : 'var(--text-2)' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: active ? '#38bdf8' : '#94a3b8' }}>
                   {item.label}
-                </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-3)', display: 'none', marginTop: 1 }}>
-                  {item.desc}
                 </div>
               </button>
             )
           })}
         </div>
 
-        {/* Animated Video Simulation Stage */}
+        {/* Video Canvas Stage (16:9 Screen Player) */}
         <div
           style={{
-            minHeight: 280,
-            padding: '24px 20px',
-            background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.08) 0%, rgba(6,9,18,0.95) 100%)',
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '16 / 9',
+            maxHeight: 410,
+            background: 'radial-gradient(ellipse at 50% 30%, #0f1c3f 0%, #050813 100%)',
+            overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            position: 'relative',
-            overflow: 'hidden'
+            cursor: 'pointer',
+            userSelect: 'none'
           }}
+          onClick={() => setIsPlaying(!isPlaying)}
         >
-          {/* STEP 1: Dropping Files Simulation */}
-          {currentStep === 1 && (
-            <div
-              className="reveal"
+          {/* Animated Background Mesh Orbs */}
+          <div
+            style={{
+              position: 'absolute',
+              width: 260,
+              height: 260,
+              borderRadius: '50%',
+              background: '#2563eb',
+              filter: 'blur(80px)',
+              opacity: 0.25,
+              top: '10%',
+              left: '30%',
+              pointerEvents: 'none'
+            }}
+          />
+
+          {/* Screencast Watermark / Live Badge */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 14,
+              left: 16,
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(10px)',
+              padding: '4px 10px',
+              borderRadius: 20,
+              border: '1px solid rgba(255,255,255,0.12)'
+            }}
+          >
+            <span
               style={{
-                width: '100%',
-                maxWidth: 420,
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: '#ef4444',
+                boxShadow: '0 0 8px #ef4444',
+                animation: 'pulseDot 1.5s infinite'
+              }}
+            />
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
+              SCREENTOUR · DEMO
+            </span>
+          </div>
+
+          {/* ══════ PHASE 1: DRAG & DROP SELECTION ══════ */}
+          {currentPhase === 1 && (
+            <div
+              style={{
+                width: '88%',
+                maxWidth: 480,
                 textAlign: 'center',
-                animation: 'fadeIn 300ms ease'
+                position: 'relative',
+                animation: 'fadeIn 250ms ease'
               }}
             >
               <div
                 style={{
-                  border: '2px dashed var(--brand)',
+                  border: isDraggingFile ? '2.5px dashed #38bdf8' : '2px dashed rgba(37,99,235,0.5)',
                   borderRadius: 20,
-                  padding: '30px 20px',
-                  background: 'rgba(37,99,235,0.06)',
-                  boxShadow: '0 0 25px rgba(37,99,235,0.15)',
-                  position: 'relative'
+                  padding: '36px 20px',
+                  background: isDraggingFile ? 'rgba(56, 189, 248, 0.12)' : 'rgba(15, 23, 42, 0.75)',
+                  boxShadow: isDraggingFile ? '0 0 35px rgba(56,189,248,0.3)' : '0 10px 30px rgba(0,0,0,0.4)',
+                  transition: 'all 200ms ease'
                 }}
               >
-                {/* Floating File Badge Animating into Box */}
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 14,
-                    background: 'linear-gradient(135deg, var(--brand), #0284c7)',
+                    width: 52,
+                    height: 52,
+                    borderRadius: 16,
+                    background: 'linear-gradient(135deg, #2563eb, #0284c7)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 12px',
-                    boxShadow: '0 8px 20px rgba(37,99,235,0.4)',
-                    animation: 'floatSlow 2s ease-in-out infinite'
+                    boxShadow: '0 8px 22px rgba(37,99,235,0.45)'
                   }}
                 >
-                  <UploadCloudIcon size={26} color="white" />
+                  <UploadCloudIcon size={28} color="white" />
                 </div>
 
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-1)', marginBottom: 4 }}>
-                  Drop files here or click to browse
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f8fafc', marginBottom: 4 }}>
+                  {isDraggingFile ? 'Release to Drop 10GB File' : 'Drop your files to start transfer'}
                 </div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginBottom: 12 }}>
-                  Send up to <strong style={{ color: 'var(--brand)' }}>10GB Free</strong> per transfer · No sign-in required
-                </p>
+                <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  Send up to <strong style={{ color: '#38bdf8' }}>10GB Free</strong> · End-to-End Encrypted
+                </div>
+              </div>
 
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '6px 14px',
-                    borderRadius: 999,
-                    background: 'var(--glass-bg)',
-                    border: '1px solid var(--border)'
-                  }}
-                >
-                  <FileIcon size={14} color="var(--brand)" />
-                  <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-2)' }}>
-                    Project_Archive_4.8GB.zip
-                  </span>
-                  <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 800 }}>Ready</span>
-                </div>
+              {/* Draggable File Floating Badge */}
+              <div
+                style={{
+                  position: 'absolute',
+                  left: isDraggingFile ? '50%' : '14%',
+                  top: isDraggingFile ? '50%' : '80%',
+                  transform: 'translate(-50%, -50%)',
+                  background: 'linear-gradient(135deg, #1e293b, #0f172a)',
+                  border: '1.5px solid #38bdf8',
+                  borderRadius: 12,
+                  padding: '8px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: '0 12px 28px rgba(0,0,0,0.6)',
+                  pointerEvents: 'none',
+                  zIndex: 20,
+                  transition: 'all 120ms linear'
+                }}
+              >
+                <FileIcon size={18} color="#38bdf8" />
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#ffffff' }}>
+                  Video_Production_Master_4.8GB.zip
+                </span>
+                <span style={{ fontSize: '0.7rem', color: '#22c55e', fontWeight: 800 }}>4.8 GB</span>
               </div>
             </div>
           )}
 
-          {/* STEP 2: Real-Time Stream & Chunk Encryption */}
-          {currentStep === 2 && (
+          {/* ══════ PHASE 2: STREAMING & ENCRYPTION ══════ */}
+          {currentPhase === 2 && (
             <div
-              className="reveal"
               style={{
-                width: '100%',
-                maxWidth: 420,
+                width: '88%',
+                maxWidth: 480,
                 textAlign: 'center',
-                animation: 'fadeIn 300ms ease'
+                position: 'relative',
+                animation: 'fadeIn 250ms ease'
               }}
             >
               <div
-                className="card"
                 style={{
-                  padding: '24px 20px',
-                  borderRadius: 20,
-                  border: '1.5px solid rgba(37,99,235,0.3)',
-                  background: 'var(--glass-bg)',
-                  boxShadow: '0 8px 30px rgba(37,99,235,0.18)'
+                  padding: '28px 24px',
+                  borderRadius: 22,
+                  border: '1.5px solid rgba(56,189,248,0.4)',
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  boxShadow: '0 12px 40px rgba(37,99,235,0.25)'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 900, color: 'var(--text-1)' }}>
-                      Streaming Chunks to Server...
+                    <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#f8fafc' }}>
+                      Streaming Chunked Payload...
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: 'var(--text-3)', marginTop: 2 }}>
-                      AES-256 GCM · Speed: <strong style={{ color: 'var(--brand)' }}>94.2 MB/s</strong>
+                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 }}>
+                      AES-256 GCM · Line Speed: <strong style={{ color: '#38bdf8' }}>96.4 MB/s</strong>
                     </div>
                   </div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 900 }} className="gradient-text">
+                  <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#38bdf8' }}>
                     {uploadPercent}%
                   </div>
                 </div>
 
-                {/* Progress Bar */}
+                {/* Animated Glowing Progress Bar */}
                 <div
                   style={{
-                    height: 10,
+                    height: 12,
                     borderRadius: 999,
-                    background: 'rgba(203,213,225,0.2)',
+                    background: 'rgba(255, 255, 255, 0.1)',
                     overflow: 'hidden',
                     marginBottom: 16,
-                    border: '1px solid var(--border)'
+                    border: '1px solid rgba(255,255,255,0.12)'
                   }}
                 >
                   <div
                     style={{
                       height: '100%',
                       borderRadius: 999,
-                      background: 'linear-gradient(90deg, #2563eb, #0284c7, #06b6d4)',
+                      background: 'linear-gradient(90deg, #2563eb, #0284c7, #00f2fe)',
                       width: `${uploadPercent}%`,
-                      transition: 'width 100ms linear',
-                      boxShadow: '0 0 12px rgba(37,99,235,0.6)'
+                      transition: 'width 80ms linear',
+                      boxShadow: '0 0 16px rgba(0,242,254,0.7)'
                     }}
                   />
                 </div>
 
-                {/* Active stream blocks */}
-                <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <div
-                      key={i}
-                      style={{
-                        flex: 1,
-                        height: 6,
-                        borderRadius: 3,
-                        background: (uploadPercent / 20) >= i ? 'var(--brand)' : 'rgba(255,255,255,0.1)',
-                        transition: 'background 200ms ease'
-                      }}
-                    />
-                  ))}
+                {/* Chunk offset telemetry boxes */}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                    Offset: {(uploadPercent * 48).toFixed(0)}MB / 4800MB
+                  </span>
+                  <span style={{ fontSize: '0.72rem', color: '#22c55e', fontWeight: 700 }}>
+                    Direct Stream Zero Stalls
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* STEP 3: Share Link & Instant Download */}
-          {currentStep === 3 && (
+          {/* ══════ PHASE 3: INSTANT LINK & 1-CLICK COPY ══════ */}
+          {currentPhase === 3 && (
             <div
-              className="reveal"
               style={{
-                width: '100%',
-                maxWidth: 420,
+                width: '88%',
+                maxWidth: 480,
                 textAlign: 'center',
-                animation: 'fadeIn 300ms ease'
+                position: 'relative',
+                animation: 'fadeIn 250ms ease'
               }}
             >
               <div
-                className="card"
                 style={{
-                  padding: '22px 20px',
-                  borderRadius: 20,
-                  border: '1.5px solid rgba(5,150,105,0.35)',
-                  background: 'var(--glass-bg)',
-                  boxShadow: '0 8px 30px rgba(5,150,105,0.15)'
+                  padding: '28px 24px',
+                  borderRadius: 22,
+                  border: '1.5px solid rgba(34,197,94,0.45)',
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  boxShadow: '0 12px 40px rgba(34,197,94,0.2)'
                 }}
               >
                 <div
                   style={{
-                    width: 44,
-                    height: 44,
+                    width: 48,
+                    height: 48,
                     borderRadius: '50%',
-                    background: 'rgba(5,150,105,0.15)',
-                    border: '2px solid #059669',
+                    background: 'rgba(34,197,94,0.15)',
+                    border: '2px solid #22c55e',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 10px',
-                    boxShadow: '0 0 16px rgba(5,150,105,0.3)'
+                    boxShadow: '0 0 20px rgba(34,197,94,0.35)'
                   }}
                 >
-                  <CheckCircleIcon size={24} color="#059669" />
+                  <CheckCircleIcon size={26} color="#22c55e" />
                 </div>
 
-                <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-1)', marginBottom: 2 }}>
-                  Transfer Link Ready!
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f8fafc', marginBottom: 3 }}>
+                  Transfer Link Ready to Share!
                 </div>
-                <p style={{ fontSize: '0.76rem', color: 'var(--text-3)', marginBottom: 12 }}>
-                  Auto-expires in 7 days · 256-bit encrypted
-                </p>
+                <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: 14 }}>
+                  Expires in 7 days · 10GB Payload Encrypted
+                </div>
 
-                {/* Link Box */}
+                {/* Instant Link Bar */}
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
-                    background: 'var(--glass-bg-subtle)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    padding: '8px 12px',
-                    marginBottom: 10
+                    background: '#070b16',
+                    border: copiedLink ? '1.5px solid #22c55e' : '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 14,
+                    padding: '8px 14px',
+                    boxShadow: copiedLink ? '0 0 16px rgba(34,197,94,0.3)' : 'none',
+                    transition: 'all 200ms ease'
                   }}
                 >
                   <input
                     type="text"
                     readOnly
-                    value="https://droplync.vercel.app/f/quantum-4x9b"
+                    value="https://droplync.vercel.app/f/quantum-48g9"
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: 'var(--brand)',
-                      fontSize: '0.78rem',
+                      color: copiedLink ? '#22c55e' : '#38bdf8',
+                      fontSize: '0.84rem',
                       fontWeight: 800,
                       width: '100%',
-                      outline: 'none'
+                      outline: 'none',
+                      fontFamily: 'monospace'
                     }}
                   />
                   <button
                     className="btn-primary"
                     style={{
-                      padding: '5px 12px',
-                      fontSize: '0.74rem',
+                      padding: '6px 14px',
+                      fontSize: '0.76rem',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 4,
-                      flexShrink: 0
+                      gap: 5,
+                      flexShrink: 0,
+                      background: copiedLink ? '#16a34a' : '#2563eb'
                     }}
                   >
                     {copiedLink ? (
                       <>
-                        <CheckIcon size={12} />
+                        <CheckIcon size={13} color="white" />
                         <span>Copied!</span>
                       </>
                     ) : (
                       <>
-                        <CopyIcon size={12} />
-                        <span>Copy</span>
+                        <CopyIcon size={13} />
+                        <span>Copy Link</span>
                       </>
                     )}
                   </button>
@@ -479,14 +576,46 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
               </div>
             </div>
           )}
+
+          {/* ══════ REALISTIC ANIMATED OS MOUSE CURSOR ══════ */}
+          <div
+            style={{
+              position: 'absolute',
+              left: `${cursorX}%`,
+              top: `${cursorY}%`,
+              zIndex: 9999,
+              pointerEvents: 'none',
+              transform: cursorClicked ? 'scale(0.88)' : 'scale(1)',
+              transition: 'left 80ms linear, top 80ms linear, transform 100ms ease',
+              filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.7))'
+            }}
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+              <polygon points="0 0 0 20 5.5 15.5 10 24 13 22.5 8.5 14 16 14" fill="#ffffff" stroke="#000000" strokeWidth="1.5" />
+            </svg>
+            {cursorClicked && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  left: -2,
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  border: '2px solid rgba(56,189,248,0.8)',
+                  animation: 'ping 400ms cubic-bezier(0, 0, 0.2, 1) infinite'
+                }}
+              />
+            )}
+          </div>
         </div>
 
         {/* Video Scrubber & Playback Controls Bar */}
         <div
           style={{
             padding: '12px 18px',
-            background: 'var(--glass-bg-subtle)',
-            borderTop: '1px solid var(--border)',
+            background: '#0d1322',
+            borderTop: '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
             alignItems: 'center',
             gap: 14
@@ -495,10 +624,10 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
           <button
             onClick={() => setIsPlaying(!isPlaying)}
             style={{
-              width: 34,
-              height: 34,
+              width: 36,
+              height: 36,
               borderRadius: '50%',
-              background: 'var(--brand)',
+              background: '#2563eb',
               border: 'none',
               color: 'white',
               cursor: 'pointer',
@@ -506,35 +635,38 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 2px 8px rgba(37,99,235,0.4)'
+              boxShadow: '0 4px 12px rgba(37,99,235,0.45)'
             }}
           >
             {isPlaying ? <PauseIcon size={16} /> : <PlayIcon size={16} />}
           </button>
 
           <button
-            onClick={handleRestart}
-            title="Replay from start"
+            onClick={() => {
+              setProgress(0)
+              setIsPlaying(true)
+            }}
+            title="Replay video"
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--text-3)',
+              color: '#94a3b8',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               padding: 4
             }}
           >
-            <RotateCcwIcon size={16} />
+            <RotateCcwIcon size={17} />
           </button>
 
-          {/* Timeline Bar */}
+          {/* Interactive Timeline Bar */}
           <div
             style={{
               flex: 1,
-              height: 6,
+              height: 7,
               borderRadius: 999,
-              background: 'rgba(203,213,225,0.25)',
+              background: 'rgba(255, 255, 255, 0.15)',
               position: 'relative',
               cursor: 'pointer',
               overflow: 'hidden'
@@ -543,20 +675,20 @@ export default function DemoVideoModal({ isOpen, onClose }: DemoVideoModalProps)
               const rect = e.currentTarget.getBoundingClientRect()
               const clickX = e.clientX - rect.left
               const newRatio = clickX / rect.width
-              setProgress(newRatio * 100)
+              handleJump(newRatio * 100)
             }}
           >
             <div
               style={{
                 height: '100%',
-                background: 'linear-gradient(90deg, var(--brand), #00f2fe)',
+                background: 'linear-gradient(90deg, #2563eb, #38bdf8, #00f2fe)',
                 width: `${progress}%`,
                 borderRadius: 999
               }}
             />
           </div>
 
-          <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-3)', minWidth: 42, textAlign: 'right' }}>
+          <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#94a3b8', minWidth: 46, textAlign: 'right' }}>
             {Math.round((progress / 100) * 14)}s / 14s
           </div>
         </div>
