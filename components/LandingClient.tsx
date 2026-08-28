@@ -470,14 +470,14 @@ export default function LandingClient() {
               </h1>
 
               <p className="reveal reveal-delay-2" style={{ fontSize: '0.98rem', color: 'var(--text-2)', maxWidth: 460, lineHeight: 1.62, marginBottom: 20 }}>
-                Drop your files to generate an instant, 256-bit encrypted link. Upload <strong>up to 10GB free</strong>, or check our dedicated <a href="/pricing" style={{ color: 'var(--brand)', fontWeight: 800, textDecoration: 'underline' }}>Pricing Plans</a> for <strong>50GB to 200GB+</strong>.
+                Drop your files to generate an instant, 256-bit encrypted link. Upload <strong>up to 10GB free per transfer</strong> with direct chunk streaming, optional password protection, and full link control from your dashboard.
               </p>
 
               {/* Compact Feature Checkmark Cards */}
               <div className="reveal reveal-delay-2 responsive-grid-2" style={{ marginBottom: 22, maxWidth: 440 }}>
                 {[
                   { title: '10GB Free per Transfer', icon: <ZapIcon size={16} color="var(--brand)" /> },
-                  { title: 'Pro Tiers up to 200GB', icon: <DiamondIcon size={16} color="var(--brand)" /> },
+                  { title: 'Dashboard Link Controls', icon: <ServerStackIcon size={16} color="var(--brand)" /> },
                   { title: 'Direct Chunk Streaming', icon: <ShieldLockIcon size={16} color="var(--brand)" /> },
                   { title: 'Auto-Expiring Links', icon: <ClockIcon size={16} color="var(--brand)" /> }
                 ].map((item, i) => (
@@ -580,10 +580,10 @@ export default function LandingClient() {
                 Engineered for Performance
               </p>
               <h2 className="reveal reveal-delay-1" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.3rem)', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: 10, lineHeight: 1.2 }}>
-                Flexible storage boundaries from 10GB to 200GB+
+                10GB transfers with central dashboard controls
               </h2>
               <p className="reveal reveal-delay-2" style={{ color: 'var(--text-2)', fontSize: '0.92rem', lineHeight: 1.55, marginBottom: 20 }}>
-                High-throughput streams, custom chunk offsets, and 3D visual responsiveness built for speed.
+                High-throughput streams, live recipient download telemetry, and direct link management from your personal dashboard.
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -624,7 +624,6 @@ export default function LandingClient() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
             <Logo height={24} />
             <div style={{ display: 'flex', gap: 20 }}>
-              <a href="/pricing" style={{ fontSize: '0.8rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Pricing & Plans</a>
               <a href="/privacy" style={{ fontSize: '0.8rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>
               <a href="/terms" style={{ fontSize: '0.8rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Terms of Service</a>
               <a href="/security" style={{ fontSize: '0.8rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Security</a>
@@ -1282,15 +1281,15 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
 }
 
 const FEATURES = [
-  { icon: <ShieldLockIcon size={22} color="var(--brand)" />, title: 'Tiered Storage Architecture', desc: '10GB free tier and up to 200GB Pro with high-performance direct offset chunking.', bg: 'rgba(37,99,235,0.12)' },
-  { icon: <ClockIcon size={22} color="#0284c7" />, title: 'Auto-Expiring Cleanups', desc: 'Set links to expire after 1 to 30 days. Files and chunks are permanently purged.', bg: 'rgba(2,132,199,0.12)' },
-  { icon: <LockIcon size={22} color="#059669" />, title: 'Client-Side Hashing', desc: 'Secure passwords with bcrypt hashing and rate-limited brute force protection.', bg: 'rgba(5,150,105,0.12)' },
-  { icon: <BarChartIcon size={22} color="#06b6d4" />, title: 'Real-Time Telemetry', desc: 'Live upload speed indicators (MB/s), estimated time remaining, and chunk verification.', bg: 'rgba(6,182,212,0.12)' },
+  { icon: <ServerStackIcon size={22} color="var(--brand)" />, title: 'Personal Link Dashboard', desc: 'Monitor active transfers, track download count, and toggle or delete links anytime from your dashboard.', bg: 'rgba(37,99,235,0.12)' },
+  { icon: <ZapIcon size={22} color="#0284c7" />, title: '10GB Free per Link', desc: 'Send large files, datasets, and archives up to 10GB with zero cost and no account required.', bg: 'rgba(2,132,199,0.12)' },
+  { icon: <LockIcon size={22} color="#059669" />, title: 'Encrypted Password Vaults', desc: 'Protect sensitive files with optional passwords, cryptographic 256-bit security, and auto-purging timers.', bg: 'rgba(5,150,105,0.12)' },
+  { icon: <BarChartIcon size={22} color="#06b6d4" />, title: 'Live Download Tracking', desc: 'Real-time telemetry, download metrics, speed indicators, and automated link expiration.', bg: 'rgba(6,182,212,0.12)' },
 ]
 
 const STATS = [
-  { value: '10 GB', label: 'Free Tier Transfer Limit' },
-  { value: '200 GB', label: 'Pro & Ultra Tier Limit' },
+  { value: '10 GB', label: 'Free Limit per Transfer' },
+  { value: 'Instant', label: 'Dashboard Link Control' },
   { value: '99.9%', label: 'Upload Success Reliability' },
   { value: '256-Bit', label: 'Cryptographic Protection' },
 ]

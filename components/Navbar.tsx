@@ -67,10 +67,12 @@ export default function Navbar({ user }: NavbarProps) {
           <Link href="/#features" className="btn-ghost">
             Features
           </Link>
-          <Link href="/pricing" className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>Pricing & Plans</span>
-            <span style={{ padding: '2px 7px', borderRadius: 999, background: 'rgba(37,99,235,0.12)', color: 'var(--brand)', fontSize: '0.72rem', fontWeight: 800 }}>10GB FREE</span>
-          </Link>
+          {user && (
+            <Link href="/dashboard" className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>Dashboard</span>
+              <span style={{ padding: '2px 7px', borderRadius: 999, background: 'rgba(37,99,235,0.12)', color: 'var(--brand)', fontSize: '0.72rem', fontWeight: 800 }}>CONTROLS</span>
+            </Link>
+          )}
         </div>
 
         {/* Right actions (Desktop) */}
@@ -89,12 +91,6 @@ export default function Navbar({ user }: NavbarProps) {
               <Link href="/settings" className="btn-ghost">
                 Settings
               </Link>
-              {userPlan === 'free' && (
-                <Link href="/pricing" className="btn-primary" style={{ padding: '8px 18px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <ZapIcon size={14} color="white" />
-                  <span>Upgrade</span>
-                </Link>
-              )}
 
               <button onClick={handleLogout} className="btn-ghost">
                 Sign out
@@ -209,7 +205,7 @@ export default function Navbar({ user }: NavbarProps) {
               Features
             </Link>
             <Link
-              href="/pricing"
+              href={user ? "/dashboard" : "/login"}
               onClick={() => setMobileMenuOpen(false)}
               style={{
                 padding: '10px 14px',
@@ -224,7 +220,7 @@ export default function Navbar({ user }: NavbarProps) {
                 justifyContent: 'space-between'
               }}
             >
-              <span>Pricing & Plans</span>
+              <span>{user ? "Dashboard & Controls" : "Dashboard Sign In"}</span>
               <span style={{ padding: '2px 7px', borderRadius: 999, background: 'rgba(37,99,235,0.12)', color: 'var(--brand)', fontSize: '0.72rem', fontWeight: 800 }}>10GB FREE</span>
             </Link>
 
@@ -280,17 +276,6 @@ export default function Navbar({ user }: NavbarProps) {
                 >
                   Settings
                 </Link>
-                {userPlan === 'free' && (
-                  <Link
-                    href="/pricing"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="btn-primary"
-                    style={{ padding: '12px', textAlign: 'center', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                  >
-                    <ZapIcon size={16} color="white" />
-                    <span>Upgrade to Pro</span>
-                  </Link>
-                )}
                 <button
                   onClick={handleLogout}
                   style={{

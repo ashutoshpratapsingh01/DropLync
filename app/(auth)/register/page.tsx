@@ -12,7 +12,8 @@ import {
   ArrowRightIcon,
   ArrowLeftIcon,
   AlertTriangleIcon,
-  SpinnerIcon
+  SpinnerIcon,
+  ZapIcon
 } from '@/components/ui/Icons'
 
 export default function RegisterPage() {
@@ -174,27 +175,27 @@ export default function RegisterPage() {
                 <span className="stat-pill" style={{ padding: '4px 12px', fontSize: '0.78rem', borderColor: 'rgba(5,150,105,0.3)', background: 'rgba(5,150,105,0.08)' }}>
                   <span className="pulse-dot" style={{ background: '#059669', width: 6, height: 6 }} />
                   <span style={{ fontWeight: 800, color: '#059669', letterSpacing: '0.02em' }}>
-                    Free Starter Tier · Instant Access
+                    Free 10GB Tier · Dashboard Control
                   </span>
                 </span>
               </div>
 
               <h1 style={{ fontSize: 'clamp(2.05rem, 3.2vw, 2.85rem)', fontWeight: 900, lineHeight: 1.12, marginBottom: 10, letterSpacing: '-0.04em', color: 'var(--text-1)' }}>
-                Start transferring.<br />
-                <span className="gradient-text">10GB Free with zero friction.</span>
+                Create account.<br />
+                <span className="gradient-text">Control links from your dashboard.</span>
               </h1>
 
               <p style={{ fontSize: '0.94rem', color: 'var(--text-2)', maxWidth: 460, lineHeight: 1.56, marginBottom: 16 }}>
-                Create your free account to unlock multi-device transfer history, custom link expiration timers, encrypted password protection, and high-speed delivery.
+                Create your free account to access your personal dashboard, track recipient downloads, pause or delete links anytime, and manage encrypted 10GB transfers.
               </p>
 
               {/* Feature Value Cards */}
               <div className="responsive-grid-2" style={{ marginBottom: 16, maxWidth: 430 }}>
                 {[
                   { title: '10GB per Transfer Free', icon: <UploadCloudIcon size={16} color="var(--brand)" /> },
-                  { title: 'Encrypted Link Vaults', icon: <ShieldLockIcon size={16} color="var(--brand)" /> },
-                  { title: 'Direct Offset Streaming', icon: <ServerStackIcon size={16} color="var(--brand)" /> },
-                  { title: 'Custom Auto-Purge Times', icon: <CheckCircleIcon size={16} color="#059669" /> }
+                  { title: 'Dashboard Link Controls', icon: <ServerStackIcon size={16} color="var(--brand)" /> },
+                  { title: 'Live Download Analytics', icon: <ZapIcon size={16} color="var(--brand)" /> },
+                  { title: 'Encrypted Password Vaults', icon: <ShieldLockIcon size={16} color="#059669" /> }
                 ].map((item, i) => (
                   <div key={i} className="card-soft card-hover" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10 }}>
                     <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{item.icon}</span>

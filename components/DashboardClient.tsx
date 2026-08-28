@@ -147,35 +147,25 @@ export default function DashboardClient({
                 </h1>
                 <span style={{
                   padding: '3px 10px', borderRadius: 999,
-                  background: currentPlan === 'free' ? 'rgba(14, 165, 233, 0.15)' : 'rgba(37, 99, 235, 0.15)',
+                  background: 'rgba(37, 99, 235, 0.12)',
                   border: '1px solid var(--border-glow)',
                   color: 'var(--brand)', fontSize: '0.74rem', fontWeight: 800
                 }}>
-                  {currentPlan.toUpperCase()} TIER ({planLimitDisplay})
+                  10GB FREE TIER · UNLIMITED LINKS
                 </span>
               </div>
-              <p style={{ color: 'var(--text-2)', fontSize: '0.88rem' }}>Manage your high-speed encrypted transmissions and storage limits</p>
+              <p style={{ color: 'var(--text-2)', fontSize: '0.88rem' }}>Manage and control your active encrypted transfer links and monitor download tracking</p>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              {currentPlan === 'free' && (
-                <button
-                  onClick={() => setUpgradeOpen(true)}
-                  className="btn-secondary"
-                  style={{ padding: '8px 16px', fontSize: '0.84rem', borderColor: 'var(--brand)', color: 'var(--brand)', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                >
-                  <ZapIcon size={15} color="var(--brand)" />
-                  <span>Upgrade Plan</span>
-                </button>
-              )}
-              <a href="/" className="btn-primary" style={{ padding: '8px 18px', fontSize: '0.84rem' }}>
-                + New Transfer
+              <a href="/" className="btn-primary" style={{ padding: '8px 20px', fontSize: '0.86rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span>+ New Transfer</span>
               </a>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="section-container" style={{ padding: '24px 28px 60px' }}>
+      <div className="section-container" style={{ padding: '24px 16px 60px' }}>
 
         {/* Verification / Notice Banner */}
         {verifyingPayment && (
@@ -193,7 +183,7 @@ export default function DashboardClient({
             fontSize: '0.9rem'
           }}>
             <SpinnerIcon size={18} color="#60a5fa" />
-            <span>Verifying subscription status with Stripe webhook...</span>
+            <span>Updating transfer status...</span>
           </div>
         )}
 
@@ -221,29 +211,23 @@ export default function DashboardClient({
           </div>
         )}
 
-        {/* Storage Quota Alert Banner */}
-        <div className="glass-panel" style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 260 }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: storagePercent > 80 ? '#dc2626' : 'var(--brand)', flexShrink: 0 }} />
+        {/* Storage Capacity Status Banner */}
+        <div className="glass-panel" style={{ padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 240 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#059669', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 800, marginBottom: 6 }}>
-                <span style={{ color: 'var(--text-1)' }}>Storage Bandwidth: {formatBytes(storageUsedNumber)} of {planLimitDisplay}</span>
-                <span style={{ color: 'var(--text-3)' }}>{storagePercent}% used</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 800, marginBottom: 4 }}>
+                <span style={{ color: 'var(--text-1)' }}>Account Capacity: 10GB per transfer link</span>
+                <span style={{ color: 'var(--brand)', fontWeight: 800 }}>Free Unlimited Sends</span>
               </div>
-              <div className="progress-bar">
-                <div className="progress-bar-fill" style={{ width: `${storagePercent}%` }} />
+              <div className="progress-bar" style={{ height: 6 }}>
+                <div className="progress-bar-fill" style={{ width: `${Math.min(100, Math.max(8, storagePercent))}%` }} />
               </div>
             </div>
           </div>
-          {currentPlan === 'free' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>Need more bandwidth?</span>
-              <button onClick={() => setUpgradeOpen(true)} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span>Unlock Pro</span>
-                <ArrowRightIcon size={14} />
-              </button>
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-3)', fontWeight: 700 }}>Total Data in Vault: {formatBytes(storageUsedNumber)}</span>
+          </div>
         </div>
 
         {/* 3D Compact Stats Cards */}
