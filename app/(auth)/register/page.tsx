@@ -31,6 +31,18 @@ export default function RegisterPage() {
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([])
 
+  // Check if user is already logged in
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.user) {
+          window.location.href = '/dashboard'
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     let timer: any
     if (step === 'otp' && countdown > 0) {
@@ -52,7 +64,8 @@ export default function RegisterPage() {
     if (e) e.preventDefault()
     setError('')
     setSuccessMsg('')
-    if (!email || !email.includes('@')) {
+    const cleanEmail = email.toLowerCase().trim()
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       setError('Please enter a valid email address')
       return
     }
@@ -62,7 +75,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, type: 'register' })
+        body: JSON.stringify({ email: cleanEmail, type: 'register' })
       })
       const data = await res.json()
       setLoading(false)
@@ -76,7 +89,7 @@ export default function RegisterPage() {
       setCountdown(60)
       setCanResend(false)
       setOtpDigits(['', '', '', '', '', ''])
-      setSuccessMsg(`We sent a 6-digit verification code to ${email}`)
+      setSuccessMsg(`We sent a 6-digit verification code to ${cleanEmail}`)
     } catch (err: any) {
       setLoading(false)
       setError('Failed to send verification code. Please check your network and try again.')
@@ -86,7 +99,8 @@ export default function RegisterPage() {
   // Handle Verify Register OTP & Create Account
   async function handleVerifyRegisterOtp(codeToVerify?: string) {
     setError('')
-    const code = codeToVerify || otpDigits.join('')
+    const cleanEmail = email.toLowerCase().trim()
+    const code = (codeToVerify || otpDigits.join('')).trim()
     if (code.length !== 6) {
       setError('Please enter all 6 digits of your verification code')
       return
@@ -97,16 +111,17 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code, name, password })
+        body: JSON.stringify({ email: cleanEmail, code, name: name.trim(), password })
       })
       const data = await res.json()
-      setLoading(false)
 
       if (data.error) {
+        setLoading(false)
         setError(data.error)
         return
       }
 
+      setSuccessMsg('Account verified! Redirecting to dashboard...')
       window.location.href = '/dashboard'
     } catch (err: any) {
       setLoading(false)
@@ -148,6 +163,12 @@ export default function RegisterPage() {
   function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
       otpInputsRef.current[index - 1]?.focus()
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      otpInputsRef.current[index - 1]?.focus()
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      otpInputsRef.current[index + 1]?.focus()
+    } else if (e.key === 'Enter') {
+      handleVerifyRegisterOtp()
     }
   }
 

@@ -32,6 +32,18 @@ export default function LoginPage() {
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([])
 
+  // Check if user is already logged in
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.user) {
+          window.location.href = '/dashboard'
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Countdown timer for OTP resend
   useEffect(() => {
     let timer: any
@@ -55,7 +67,8 @@ export default function LoginPage() {
     if (e) e.preventDefault()
     setError('')
     setSuccessMsg('')
-    if (!email || !email.includes('@')) {
+    const cleanEmail = email.toLowerCase().trim()
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       setError('Please enter a valid email address')
       return
     }
@@ -65,7 +78,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, type: 'login' })
+        body: JSON.stringify({ email: cleanEmail, type: 'login' })
       })
       const data = await res.json()
       setLoading(false)
@@ -79,7 +92,7 @@ export default function LoginPage() {
       setCountdown(60)
       setCanResend(false)
       setOtpDigits(['', '', '', '', '', ''])
-      setSuccessMsg(`We sent a 6-digit verification code to ${email}`)
+      setSuccessMsg(`We sent a 6-digit verification code to ${cleanEmail}`)
     } catch (err: any) {
       setLoading(false)
       setError('Failed to send verification code. Please check your network and try again.')
@@ -89,7 +102,8 @@ export default function LoginPage() {
   // Handle Verify OTP
   async function handleVerifyOtp(codeToVerify?: string) {
     setError('')
-    const code = codeToVerify || otpDigits.join('')
+    const cleanEmail = email.toLowerCase().trim()
+    const code = (codeToVerify || otpDigits.join('')).trim()
     if (code.length !== 6) {
       setError('Please enter all 6 digits of your verification code')
       return
@@ -100,16 +114,17 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code })
+        body: JSON.stringify({ email: cleanEmail, code })
       })
       const data = await res.json()
-      setLoading(false)
 
       if (data.error) {
+        setLoading(false)
         setError(data.error)
         return
       }
 
+      setSuccessMsg('Verification successful! Redirecting to dashboard...')
       window.location.href = '/dashboard'
     } catch (err: any) {
       setLoading(false)
@@ -153,6 +168,12 @@ export default function LoginPage() {
   function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
       otpInputsRef.current[index - 1]?.focus()
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      otpInputsRef.current[index - 1]?.focus()
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      otpInputsRef.current[index + 1]?.focus()
+    } else if (e.key === 'Enter') {
+      handleVerifyOtp()
     }
   }
 
@@ -160,19 +181,35 @@ export default function LoginPage() {
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    setLoading(true)
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    })
-    const data = await res.json()
-    setLoading(false)
-    if (data.error) {
-      setError(data.error)
+    const cleanEmail = email.toLowerCase().trim()
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setError('Please enter a valid email address')
       return
     }
-    window.location.href = '/dashboard'
+    if (!password) {
+      setError('Please enter your password')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password })
+      })
+      const data = await res.json()
+      if (data.error) {
+        setLoading(false)
+        setError(data.error)
+        return
+      }
+      setSuccessMsg('Signed in successfully! Redirecting to dashboard...')
+      window.location.href = '/dashboard'
+    } catch (err: any) {
+      setLoading(false)
+      setError('Sign in request failed. Please try again.')
+    }
   }
 
   return (
