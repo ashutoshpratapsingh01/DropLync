@@ -10,9 +10,8 @@ def create_icon(size, filename, maskable=False):
         # Full coverage for maskable
         draw.rectangle([0, 0, size, size], fill=(6, 9, 18, 255))
     else:
-        # Rounded squircle
-        corner_radius = int(size * 0.22)
-        draw.rounded_rectangle([2, 2, size - 2, size - 2], radius=corner_radius, fill=(6, 9, 18, 255), outline=(255, 255, 255, 30), width=int(size * 0.015))
+        # Pure transparent background for standard icons
+        pass
 
     # Center Prism Logo
     cx = size / 2

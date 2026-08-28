@@ -1,10 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
   <defs>
-    <radialGradient id="bgGrad512" cx="50%" cy="0%" r="90%">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="50%" stop-color="#0b0f1d"/>
-      <stop offset="100%" stop-color="#060912"/>
-    </radialGradient>
     <linearGradient id="prismTop512" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#38bdf8"/>
       <stop offset="100%" stop-color="#0284c7"/>
@@ -28,11 +23,7 @@
     </filter>
   </defs>
 
-  <!-- Squircle Base Frame -->
-  <rect width="512" height="512" rx="118" fill="url(#bgGrad512)"/>
-  <rect x="2" y="2" width="508" height="508" rx="116" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
-
-  <!-- 3D Quantum Prism Icon Centered -->
+  <!-- 3D Quantum Prism Icon on Transparent Canvas -->
   <g transform="translate(128, 100)">
     <circle cx="128" cy="150" r="115" fill="#2563eb" opacity="0.35" filter="url(#glow512)"/>
 
