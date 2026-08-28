@@ -97,10 +97,10 @@ def create_screenshot(width, height, filename, title_text, sub_text):
     print(f"Generated Screenshot: {filename} ({width}x{height})")
 
 os.makedirs("public", exist_ok=True)
-create_icon(192, "public/icon-192.png", False)
-create_icon(192, "public/icon-maskable-192.png", True)
-create_icon(512, "public/icon-512.png", False)
-create_icon(512, "public/icon-maskable-512.png", True)
+for sz in [72, 96, 128, 144, 152, 192, 256, 384, 512]:
+    create_icon(sz, f"public/icon-{sz}.png", False)
+    create_icon(sz, f"public/icon-maskable-{sz}.png", True)
+
 create_icon(180, "public/apple-touch-icon.png", False)
 
 create_screenshot(750, 1334, "public/screenshot-mobile.png", "DropLync Mobile", "10GB Secure Transfers")
