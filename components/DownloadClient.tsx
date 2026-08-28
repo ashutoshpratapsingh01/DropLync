@@ -261,8 +261,8 @@ export default function DownloadClient({ token }: { token: string }) {
             </div>
 
             {/* Right: Widget */}
-            <div className="reveal reveal-delay-2">
-              <Tilt3D intensity={5} glare={true} className="glass-panel" style={{ padding: '20px 20px', borderRadius: 20 }}>
+            <div className="reveal reveal-delay-2" style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
+              <Tilt3D intensity={6} glare={true} className="glass-panel" style={{ padding: '20px 16px', borderRadius: 24, width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
                 
                 {/* Header */}
                 <div style={{ marginBottom: 12 }}>
@@ -355,11 +355,11 @@ export default function DownloadClient({ token }: { token: string }) {
                           Enjoy high line-speed delivery. Want to send your own files?
                         </p>
 
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
                           <a
                             href="/"
                             className="btn-primary"
-                            style={{ padding: '7px 14px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                            style={{ padding: '7px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 5, flex: '1 1 auto', justifyContent: 'center' }}
                           >
                             <ArrowUpTrayIcon size={13} />
                             <span>Send Files (10GB Free)</span>
@@ -368,7 +368,7 @@ export default function DownloadClient({ token }: { token: string }) {
                           <button
                             onClick={copyShareLink}
                             className="btn-secondary"
-                            style={{ padding: '7px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                            style={{ padding: '7px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 5, flex: '1 1 auto', justifyContent: 'center' }}
                           >
                             {copiedLink ? (
                               <>
@@ -427,7 +427,7 @@ export default function DownloadClient({ token }: { token: string }) {
                     )}
 
                     {/* Compact File list items */}
-                    <div style={{ border: '1px solid var(--border-glass)', borderRadius: 12, overflow: 'hidden', background: 'var(--glass-bg-subtle)' }}>
+                    <div style={{ border: '1px solid var(--border-glass)', borderRadius: 12, overflow: 'hidden', background: 'var(--glass-bg-subtle)', width: '100%', boxSizing: 'border-box' }}>
                       <div style={{ padding: '7px 12px', background: 'var(--glass-bg)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           Files in Transfer ({totalFiles})
@@ -437,30 +437,36 @@ export default function DownloadClient({ token }: { token: string }) {
                         </span>
                       </div>
 
-                      <div style={{ maxHeight: 140, overflowY: 'auto' }}>
+                      <div style={{ maxHeight: 150, overflowY: 'auto' }}>
                         {files.map((file, i) => (
                           <div
                             key={file.id}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
+                              justifyContent: 'space-between',
                               gap: 8,
                               padding: '8px 12px',
                               borderBottom: i < files.length - 1 ? '1px solid var(--border)' : 'none',
-                              transition: 'background 150ms ease'
+                              transition: 'background 150ms ease',
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              minWidth: 0
                             }}
                             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,99,235,0.04)')}
                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                           >
-                            <div style={{ width: 30, height: 30, borderRadius: 6, background: 'var(--glass-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', flexShrink: 0 }}>
-                              <RenderFileIcon mimeType={file.mimeType} />
-                            </div>
-                            <div style={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden' }}>
-                              <div title={file.originalName} style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1, width: '100%', display: 'block' }}>
-                                {file.originalName}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: '1 1 0%', overflow: 'hidden' }}>
+                              <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--glass-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', flexShrink: 0 }}>
+                                <RenderFileIcon mimeType={file.mimeType} />
                               </div>
-                              <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
-                                {formatBytes(parseInt(file.size))}
+                              <div style={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden' }}>
+                                <div title={file.originalName} style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1, width: '100%', display: 'block' }}>
+                                  {file.originalName}
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
+                                  {formatBytes(parseInt(file.size))}
+                                </div>
                               </div>
                             </div>
                             <button
@@ -487,7 +493,9 @@ export default function DownloadClient({ token }: { token: string }) {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       flexWrap: 'wrap',
-                      gap: 6
+                      gap: 6,
+                      width: '100%',
+                      boxSizing: 'border-box'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <UploadCloudIcon size={14} color="var(--brand)" />
@@ -504,7 +512,8 @@ export default function DownloadClient({ token }: { token: string }) {
                           textDecoration: 'none',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 3
+                          gap: 3,
+                          flexShrink: 0
                         }}
                       >
                         <span>Start Transfer</span>
