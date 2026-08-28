@@ -247,16 +247,16 @@ export default function DashboardClient({
         </div>
 
         {/* 3D Compact Stats Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+        <div className="responsive-stats-grid" style={{ marginBottom: 24 }}>
           {STAT_CARDS.map((card, i) => (
             <Tilt3D key={i} intensity={5}>
-              <div className="card card-hover" style={{ padding: '16px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: card.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border)' }}>
+              <div className="card card-hover" style={{ padding: '14px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: card.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid var(--border)' }}>
                   {card.icon}
                 </div>
-                <div>
-                  <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--text-1)', lineHeight: 1, letterSpacing: '-0.03em' }}>{card.value}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginTop: 4, fontWeight: 700 }}>{card.label}</div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--text-1)', lineHeight: 1, letterSpacing: '-0.03em' }}>{card.value}</div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-3)', marginTop: 4, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.label}</div>
                 </div>
               </div>
             </Tilt3D>
@@ -283,13 +283,14 @@ export default function DashboardClient({
             <a href="/" className="btn-primary" style={{ padding: '10px 24px', fontSize: '0.88rem' }}>Send Your First File</a>
           </div>
         ) : (
-          <div className="glass-panel" style={{ overflow: 'hidden' }}>
-            {/* Table header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 180px', gap: 14, padding: '12px 20px', background: 'var(--glass-bg-subtle)', borderBottom: '1px solid var(--border)' }}>
-              {['Transfer Name', 'Size', 'Status', 'Actions'].map((h, i) => (
-                <div key={i} style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: i === 3 ? 'right' : 'left' }}>{h}</div>
-              ))}
-            </div>
+          <div className="glass-panel table-responsive-wrapper" style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: 620 }}>
+              {/* Table header */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px 170px', gap: 12, padding: '12px 18px', background: 'var(--glass-bg-subtle)', borderBottom: '1px solid var(--border)' }}>
+                {['Transfer Name', 'Size', 'Status', 'Actions'].map((h, i) => (
+                  <div key={i} style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: i === 3 ? 'right' : 'left' }}>{h}</div>
+                ))}
+              </div>
 
             {transfers.map((t, i) => {
               const isExpired = new Date(t.expiresAt) <= new Date()
@@ -361,6 +362,7 @@ export default function DashboardClient({
                 </div>
               )
             })}
+            </div>
           </div>
         )}
       </div>

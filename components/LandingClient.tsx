@@ -450,7 +450,7 @@ export default function LandingClient() {
       {/* ── HERO SECTION - Fit-to-screen Optimized ── */}
       <section className="hero-bg" style={{ minHeight: 'calc(100vh - 68px)', display: 'flex', alignItems: 'center', padding: '24px 0 36px', position: 'relative', zIndex: 1 }}>
         <div className="section-container" style={{ width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.08fr 0.92fr', gap: 40, alignItems: 'center' }}>
+          <div className="responsive-grid-hero">
 
             {/* Left: Copy & Value Props */}
             <div>
@@ -473,7 +473,7 @@ export default function LandingClient() {
               </p>
 
               {/* Compact Feature Checkmark Cards */}
-              <div className="reveal reveal-delay-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 22, maxWidth: 440 }}>
+              <div className="reveal reveal-delay-2 responsive-grid-2" style={{ marginBottom: 22, maxWidth: 440 }}>
                 {[
                   { title: '10GB Free per Transfer', icon: <ZapIcon size={16} color="var(--brand)" /> },
                   { title: 'Pro Tiers up to 200GB', icon: <DiamondIcon size={16} color="var(--brand)" /> },
@@ -502,8 +502,8 @@ export default function LandingClient() {
             </div>
 
             {/* Right: Screen-Balanced 3D Interactive Glass Widget */}
-            <div className="reveal reveal-delay-2">
-              <Tilt3D intensity={6} glare={true} className="glass-panel" style={{ padding: '24px 24px', borderRadius: 24 }}>
+            <div className="reveal reveal-delay-2" style={{ width: '100%' }}>
+              <Tilt3D intensity={6} glare={true} className="glass-panel" style={{ padding: '24px 20px', borderRadius: 24, width: '100%' }}>
                 {step === 'upload' && (
                   <UploadStep
                     files={files}
@@ -573,7 +573,7 @@ export default function LandingClient() {
       {/* ── 3D FEATURES SHOWCASE & GIANT STAT CARDS ── */}
       <section id="features" className="section-alt" style={{ minHeight: 'calc(100vh - 68px)', display: 'flex', alignItems: 'center', padding: '32px 0 40px', position: 'relative' }}>
         <div className="section-container" style={{ width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.08fr 0.92fr', gap: 48, alignItems: 'center' }}>
+          <div className="responsive-grid-features">
             <div>
               <p className="reveal" style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--brand)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
                 Engineered for Performance
@@ -600,7 +600,7 @@ export default function LandingClient() {
 
             {/* Giant Stat Cards */}
             <div className="reveal reveal-delay-2">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="responsive-grid-2">
                 {STATS.map((s, i) => (
                   <Tilt3D key={i} intensity={6}>
                     <div className="card card-hover" style={{ padding: '22px 18px', textAlign: 'center', minHeight: 115, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

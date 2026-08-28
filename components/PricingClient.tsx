@@ -167,7 +167,7 @@ export default function PricingClient({ user }: { user?: any }) {
         </div>
 
         {/* 4 Plan Cards Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 48 }}>
+        <div className="responsive-grid-4" style={{ marginBottom: 48 }}>
           {PLANS.map((plan, i) => (
             <Tilt3D key={plan.id} intensity={4}>
               <div
@@ -242,13 +242,13 @@ export default function PricingClient({ user }: { user?: any }) {
         </div>
 
         {/* Comparison Matrix */}
-        <div className="glass-panel" style={{ padding: '28px 24px', overflow: 'hidden' }}>
+        <div className="glass-panel" style={{ padding: '24px 18px', overflow: 'hidden' }}>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: 4, color: 'var(--text-1)', letterSpacing: '-0.02em' }}>
             Detailed Storage & Capability Matrix
           </h2>
           <p style={{ color: 'var(--text-2)', marginBottom: 20, fontSize: '0.88rem' }}>Compare features and limits side by side.</p>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-responsive-wrapper">
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1.5px solid var(--border)', background: 'var(--glass-bg-subtle)' }}>

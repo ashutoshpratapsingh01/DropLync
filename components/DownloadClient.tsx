@@ -208,7 +208,7 @@ export default function DownloadClient({ token }: { token: string }) {
       {/* HERO SECTION */}
       <section className="hero-bg" style={{ minHeight: 'calc(100vh - 60px)', display: 'flex', alignItems: 'center', padding: '10px 0 16px', position: 'relative', zIndex: 1 }}>
         <div className="section-container" style={{ width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 36, alignItems: 'center' }}>
+          <div className="responsive-grid-download">
 
             {/* Left: Copy & Value Props */}
             <div>
@@ -231,7 +231,7 @@ export default function DownloadClient({ token }: { token: string }) {
               </p>
 
               {/* Feature Cards */}
-              <div className="reveal reveal-delay-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14, maxWidth: 430 }}>
+              <div className="reveal reveal-delay-2 responsive-grid-2" style={{ marginBottom: 14, maxWidth: 430 }}>
                 {[
                   { title: 'Direct Chunk Stream', icon: <UploadCloudIcon size={16} color="var(--brand)" /> },
                   { title: 'End-to-End Encrypted', icon: <ShieldLockIcon size={16} color="var(--brand)" /> },

@@ -33,3 +33,5 @@ tsconfig.tsbuildinfo
 # OS files
 .DS_Store
 Thumbs.db
+
+.vercel

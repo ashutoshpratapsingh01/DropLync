@@ -191,7 +191,7 @@ export default function LoginPage() {
 
       <section className="hero-bg" style={{ width: '100%', padding: '24px 0 32px', position: 'relative', zIndex: 1 }}>
         <div className="section-container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1.08fr 0.92fr', gap: 44, alignItems: 'center' }}>
+          <div className="responsive-grid-hero">
 
             {/* Left: Copy & Value Props */}
             <div>
@@ -214,7 +214,7 @@ export default function LoginPage() {
               </p>
 
               {/* Feature Value Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18, maxWidth: 450 }}>
+              <div className="responsive-grid-2" style={{ marginBottom: 18, maxWidth: 450 }}>
                 {[
                   { title: '10GB Free Transfers', icon: <ArrowUpTrayIcon size={17} color="var(--brand)" /> },
                   { title: 'Encrypted Link Vaults', icon: <ShieldLockIcon size={17} color="var(--brand)" /> },

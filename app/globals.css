@@ -179,7 +179,131 @@ html.dark .navbar {
 }
 
 /* ── Layout Containers ── */
-.section-container { max-width: 1240px; margin: 0 auto; padding: 0 28px; position: relative; z-index: 1; }
+.section-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 16px;
+  position: relative;
+  z-index: 1;
+}
+@media (min-width: 640px) {
+  .section-container {
+    padding: 0 22px;
+  }
+}
+@media (min-width: 1024px) {
+  .section-container {
+    padding: 0 28px;
+  }
+}
+
+/* ── Mobile Responsive Grids ── */
+.responsive-grid-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  .responsive-grid-hero {
+    grid-template-columns: 1.08fr 0.92fr;
+    gap: 40px;
+  }
+}
+
+.responsive-grid-download {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  .responsive-grid-download {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 36px;
+  }
+}
+
+.responsive-grid-features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  .responsive-grid-features {
+    grid-template-columns: 1.08fr 0.92fr;
+    gap: 48px;
+  }
+}
+
+.responsive-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+@media (min-width: 480px) {
+  .responsive-grid-2 {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+.responsive-grid-4 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 580px) {
+  .responsive-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+@media (min-width: 1024px) {
+  .responsive-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+.responsive-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 900px) {
+  .responsive-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+}
+
+/* ── Mobile Utilities ── */
+.mobile-hide {
+  display: none !important;
+}
+@media (min-width: 768px) {
+  .mobile-hide {
+    display: flex !important;
+  }
+}
+
+.desktop-hide {
+  display: flex !important;
+}
+@media (min-width: 768px) {
+  .desktop-hide {
+    display: none !important;
+  }
+}
+
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 
 /* ── Spacious Glassmorphism Panels & Cards ── */
 .glass-panel {

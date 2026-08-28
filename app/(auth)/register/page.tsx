@@ -166,7 +166,7 @@ export default function RegisterPage() {
 
       <section className="hero-bg" style={{ width: '100%', padding: '20px 0 28px', position: 'relative', zIndex: 1 }}>
         <div className="section-container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1.08fr 0.92fr', gap: 44, alignItems: 'center' }}>
+          <div className="responsive-grid-hero">
 
             {/* Left: Copy & Value Props */}
             <div>
@@ -189,7 +189,7 @@ export default function RegisterPage() {
               </p>
 
               {/* Feature Value Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16, maxWidth: 430 }}>
+              <div className="responsive-grid-2" style={{ marginBottom: 16, maxWidth: 430 }}>
                 {[
                   { title: '10GB per Transfer Free', icon: <UploadCloudIcon size={16} color="var(--brand)" /> },
                   { title: 'Encrypted Link Vaults', icon: <ShieldLockIcon size={16} color="var(--brand)" /> },

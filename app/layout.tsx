@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import SoundEffects from '@/components/SoundEffects'
 
@@ -6,6 +6,16 @@ export const metadata: Metadata = {
   title: 'DropLync — Send it. Share it. Gone when it\'s done.',
   description: 'Secure file transfer and sharing. Upload files, get a secure link, share it. Files expire automatically.',
   icons: { icon: '/favicon.svg' },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#060912' },
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
