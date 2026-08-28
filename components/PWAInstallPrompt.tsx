@@ -122,16 +122,52 @@ export default function PWAInstallPrompt() {
               style={{
                 width: 38,
                 height: 38,
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, var(--brand), #0284c7)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: '0 4px 12px rgba(37,99,235,0.35)'
+                flexShrink: 0
               }}
             >
-              <DownloadCloudIcon size={20} color="white" />
+              {/* Transparent 3D Quantum Prism Logo */}
+              <svg
+                viewBox="0 0 52 52"
+                fill="none"
+                width="38"
+                height="38"
+                style={{
+                  filter: 'drop-shadow(0 3px 10px rgba(37,99,235,0.45))'
+                }}
+              >
+                <defs>
+                  <linearGradient id="pwaPrismTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#0284c7" />
+                  </linearGradient>
+                  <linearGradient id="pwaPrismLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#2563eb" />
+                    <stop offset="100%" stopColor="#1e3a8a" />
+                  </linearGradient>
+                  <linearGradient id="pwaPrismRight" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#0ea5e9" />
+                    <stop offset="100%" stopColor="#1d4ed8" />
+                  </linearGradient>
+                  <linearGradient id="pwaCoreBeam" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="50%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#00f2fe" />
+                  </linearGradient>
+                </defs>
+                <g transform="translate(6, 6)">
+                  <polygon points="20,4 34,12 20,20 6,12" fill="url(#pwaPrismTop)" opacity="0.95" />
+                  <polygon points="6,12 20,20 20,36 6,28" fill="url(#pwaPrismLeft)" />
+                  <polygon points="20,20 34,12 34,28 20,36" fill="url(#pwaPrismRight)" />
+                  <path d="M20,6 L20,34" stroke="url(#pwaCoreBeam)" strokeWidth="2.5" strokeLinecap="round" />
+                  <circle cx="20" cy="20" r="3.2" fill="#ffffff" />
+                  <circle cx="20" cy="20" r="1.8" fill="#00f2fe" />
+                  <polyline points="6,12 20,20 34,12" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.2" />
+                  <line x1="20" y1="20" x2="20" y2="36" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2" />
+                </g>
+              </svg>
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--text-1)', lineHeight: 1.2 }}>
