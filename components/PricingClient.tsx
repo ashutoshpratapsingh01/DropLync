@@ -5,6 +5,7 @@ import { useScrollReveal } from '@/hooks/useScrollReveal'
 import Tilt3D from '@/components/ui/Tilt3D'
 import Background3D from '@/components/Background3D'
 import UpgradeModal from '@/components/ui/UpgradeModal'
+import Logo from '@/components/Logo'
 import { CheckIcon } from '@/components/ui/Icons'
 
 export default function PricingClient({ user }: { user?: any }) {
@@ -298,7 +299,7 @@ export default function PricingClient({ user }: { user?: any }) {
       <footer style={{ borderTop: '1px solid var(--border)', padding: '16px 0', marginTop: 48, background: 'var(--glass-bg-subtle)', backdropFilter: 'blur(16px)' }}>
         <div className="section-container">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
-            <img src="/logo.svg" alt="DropLync" height={24} style={{ height: 24 }} />
+            <Logo height={24} />
             <div style={{ display: 'flex', gap: 20 }}>
               <a href="/pricing" style={{ fontSize: '0.8rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Pricing & Plans</a>
               <a href="/privacy" style={{ fontSize: '0.8rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>

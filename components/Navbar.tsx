@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ZapIcon, XIcon } from '@/components/ui/Icons'
+import Logo from '@/components/Logo'
 
 function ThemeToggle() {
   const [dark, setDark] = useState(false)
@@ -57,8 +58,8 @@ export default function Navbar({ user }: NavbarProps) {
       <div className="section-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 62 }}>
 
         {/* Brand Logo with 3D Quantum Prism Icon */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
-          <img src="/logo.svg" alt="DropLync" height={32} style={{ height: 32, filter: 'drop-shadow(0 4px 12px rgba(37,99,235,0.3))' }} />
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
+          <Logo height={32} />
         </Link>
 
         {/* Center navigation links (Desktop) */}

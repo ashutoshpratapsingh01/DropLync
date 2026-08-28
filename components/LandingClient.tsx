@@ -5,6 +5,7 @@ import { formatBytes } from '@/lib/utils'
 import Background3D from '@/components/Background3D'
 import Tilt3D from '@/components/ui/Tilt3D'
 import UpgradeModal from '@/components/ui/UpgradeModal'
+import Logo from '@/components/Logo'
 import { FREE_LIMIT_BYTES } from '@/lib/plans'
 import {
   UploadCloudIcon,
@@ -621,7 +622,7 @@ export default function LandingClient() {
       <footer style={{ borderTop: '1px solid var(--border)', padding: '16px 0', background: 'var(--glass-bg-subtle)', backdropFilter: 'blur(16px)' }}>
         <div className="section-container">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
-            <img src="/logo.svg" alt="DropLync" height={24} style={{ height: 24 }} />
+            <Logo height={24} />
             <div style={{ display: 'flex', gap: 20 }}>
               <a href="/pricing" style={{ fontSize: '0.8rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Pricing & Plans</a>
               <a href="/privacy" style={{ fontSize: '0.8rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>
@@ -855,7 +856,7 @@ function UploadStep({
 
       {/* Compact File list */}
       {files.length > 0 && (
-        <div style={{ border: '1.5px solid var(--border-glass)', borderRadius: 16, overflow: 'hidden', marginBottom: 14, background: 'var(--glass-bg-subtle)' }}>
+        <div style={{ border: '1.5px solid var(--border-glass)', borderRadius: 16, overflow: 'hidden', marginBottom: 14, background: 'var(--glass-bg-subtle)', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
           <div style={{ maxHeight: 180, overflowY: 'auto' }}>
             {files.map((uf: UploadFile, idx: number) => (
               <div
@@ -863,24 +864,40 @@ function UploadStep({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
-                  padding: '10px 14px',
+                  gap: 10,
+                  padding: '10px 12px',
                   borderTop: idx > 0 ? '1px solid var(--border)' : 'none',
                   background: uf.status === 'done' ? 'rgba(5,150,105,0.06)' : uf.status === 'error' ? 'rgba(220,38,38,0.06)' : 'transparent',
-                  transition: 'background 200ms ease'
+                  transition: 'background 200ms ease',
+                  minWidth: 0,
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}
               >
                 <HolographicProgress progress={uf.progress} status={uf.status} id={uf.id} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-1)', marginBottom: 2 }}>
+                <div style={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden' }}>
+                  <div
+                    title={uf.file.name}
+                    style={{
+                      fontSize: '0.86rem',
+                      fontWeight: 800,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      color: 'var(--text-1)',
+                      marginBottom: 2,
+                      width: '100%',
+                      display: 'block'
+                    }}
+                  >
                     {uf.file.name}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span>{formatBytes(uf.file.size)}</span>
-                    {uf.status === 'uploading' && <span style={{ color: 'var(--brand)', fontWeight: 800 }}>• Uploading {uf.progress}%</span>}
-                    {uf.status === 'done'      && <span style={{ color: '#059669', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 3 }}>• <CheckIcon size={12} color="#059669" /> Ready</span>}
-                    {uf.status === 'error'     && <span style={{ color: '#dc2626', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 3 }}>• <XIcon size={12} color="#dc2626" /> {uf.error || 'Failed'}</span>}
-                    {uf.status === 'pending'   && <span>• Ready to send</span>}
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-3)', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', overflow: 'hidden' }}>
+                    <span style={{ whiteSpace: 'nowrap' }}>{formatBytes(uf.file.size)}</span>
+                    {uf.status === 'uploading' && <span style={{ color: 'var(--brand)', fontWeight: 800, whiteSpace: 'nowrap' }}>• Uploading {uf.progress}%</span>}
+                    {uf.status === 'done'      && <span style={{ color: '#059669', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>• <CheckIcon size={12} color="#059669" /> Ready</span>}
+                    {uf.status === 'error'     && <span style={{ color: '#dc2626', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 3, wordBreak: 'break-word' }}>• <XIcon size={12} color="#dc2626" /> {uf.error || 'Failed'}</span>}
+                    {uf.status === 'pending'   && <span style={{ whiteSpace: 'nowrap' }}>• Ready to send</span>}
                   </div>
                 </div>
                 {!isUploading && uf.status === 'pending' && (
@@ -895,8 +912,8 @@ function UploadStep({
             ))}
           </div>
 
-          <div style={{ padding: '10px 14px', background: 'var(--glass-bg)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.84rem', color: isOverFreeLimit ? '#dc2626' : 'var(--text-2)', fontWeight: 700 }}>
+          <div style={{ padding: '10px 12px', background: 'var(--glass-bg)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%', boxSizing: 'border-box' }}>
+            <span style={{ fontSize: '0.82rem', color: isOverFreeLimit ? '#dc2626' : 'var(--text-2)', fontWeight: 700, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {files.length} file{files.length !== 1 ? 's' : ''} · {formatBytes(totalSize)}
               {isOverFreeLimit && ' (Limit 10GB)'}
             </span>
@@ -904,7 +921,7 @@ function UploadStep({
               <button
                 onClick={onNext}
                 className="btn-primary"
-                style={{ padding: '8px 20px', fontSize: '0.86rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                style={{ padding: '7px 16px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}
               >
                 <span>{isOverFreeLimit ? 'Upgrade to Send' : 'Next: Settings'}</span>
                 <ArrowRightIcon size={14} />

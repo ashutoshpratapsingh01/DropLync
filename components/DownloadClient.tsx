@@ -4,6 +4,7 @@ import { formatBytes, timeUntilExpiry } from '@/lib/utils'
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 import Tilt3D from '@/components/ui/Tilt3D'
 import Background3D from '@/components/Background3D'
+import Logo from '@/components/Logo'
 import {
   DownloadCloudIcon,
   ArrowDownTrayIcon,
@@ -454,8 +455,8 @@ export default function DownloadClient({ token }: { token: string }) {
                             <div style={{ width: 30, height: 30, borderRadius: 6, background: 'var(--glass-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', flexShrink: 0 }}>
                               <RenderFileIcon mimeType={file.mimeType} />
                             </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>
+                            <div style={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden' }}>
+                              <div title={file.originalName} style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1, width: '100%', display: 'block' }}>
                                 {file.originalName}
                               </div>
                               <div style={{ fontSize: '0.72rem', color: 'var(--text-3)' }}>
@@ -524,7 +525,7 @@ export default function DownloadClient({ token }: { token: string }) {
       <footer style={{ borderTop: '1px solid var(--border)', padding: '12px 0', background: 'var(--glass-bg-subtle)', backdropFilter: 'blur(16px)', position: 'relative', zIndex: 1 }}>
         <div className="section-container">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <img src="/logo.svg" alt="DropLync" height={22} style={{ height: 22 }} />
+            <Logo height={22} />
             <div style={{ display: 'flex', gap: 18 }}>
               <a href="/pricing" style={{ fontSize: '0.78rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Pricing & Plans</a>
               <a href="/privacy" style={{ fontSize: '0.78rem', color: 'var(--text-3)', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>

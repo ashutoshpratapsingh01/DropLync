@@ -1,5 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 52" fill="none">
   <defs>
+    <style>
+      .logo-drop-text {
+        fill: #0f172a;
+      }
+      @media (prefers-color-scheme: dark) {
+        .logo-drop-text {
+          fill: #f8fafc;
+        }
+      }
+    </style>
     <!-- Quantum Sapphire & Cyan Refraction Gradients -->
     <linearGradient id="prismTop" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#38bdf8"/>
@@ -31,7 +41,7 @@
   <!-- 3D Quantum Hyper-Prism Icon -->
   <g transform="translate(6, 6)">
     <!-- Ambient Sapphire Aura -->
-    <circle cx="20" cy="20" r="16" fill="#2563eb" opacity="0.22" filter="url(#prismGlow)"/>
+    <circle cx="20" cy="20" r="16" fill="#2563eb" opacity="0.25" filter="url(#prismGlow)"/>
 
     <!-- 3D Isometric Crystal Cube Faces -->
     <!-- Top Face -->
@@ -55,9 +65,9 @@
     <line x1="20" y1="20" x2="20" y2="36" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
   </g>
 
-  <!-- Premium Brand Wordmark -->
-  <text x="56" y="34" font-family="'Plus Jakarta Sans', 'Inter', system-ui, sans-serif" font-weight="900" font-size="25" fill="currentColor" letter-spacing="-0.04em">Drop</text>
-  <text x="119" y="34" font-family="'Plus Jakarta Sans', 'Inter', system-ui, sans-serif" font-weight="900" font-size="25" fill="url(#wordGrad)" letter-spacing="-0.04em">Lync</text>
+  <!-- Premium Brand Wordmark: 'Drop' light in dark mode, hard in light mode -->
+  <text class="logo-drop-text" x="56" y="34" font-family="'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif" font-weight="900" font-size="25" letter-spacing="-0.04em">Drop</text>
+  <text x="119" y="34" font-family="'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif" font-weight="900" font-size="25" fill="url(#wordGrad)" letter-spacing="-0.04em">Lync</text>
 
   <!-- Quantum Pulse Dot -->
   <circle cx="182" cy="23" r="3.2" fill="#00f2fe" filter="url(#prismGlow)"/>
