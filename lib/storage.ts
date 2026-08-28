@@ -1,7 +1,18 @@
 import fs from 'fs'
 import path from 'path'
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || (process.env.VERCEL ? '/tmp/storage/uploads' : './storage/uploads')
+function getUploadBaseDirectory(): string {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return '/tmp/storage/uploads'
+  }
+  const custom = process.env.UPLOAD_DIR
+  if (custom && !custom.startsWith('./storage')) {
+    return path.resolve(custom)
+  }
+  return path.join(process.cwd(), 'storage', 'uploads')
+}
+
+export const UPLOAD_DIR = getUploadBaseDirectory()
 
 export interface StorageObject {
   path: string
@@ -9,7 +20,13 @@ export interface StorageObject {
 }
 
 export async function ensureDir(dir: string) {
-  await fs.promises.mkdir(dir, { recursive: true })
+  try {
+    await fs.promises.mkdir(dir, { recursive: true })
+  } catch (err: any) {
+    if (err.code !== 'EEXIST') {
+      console.warn(`ensureDir warning for ${dir}:`, err.message)
+    }
+  }
 }
 
 export function getStoragePath(transferId: string, fileId: string, filename: string): string {

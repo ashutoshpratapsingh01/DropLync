@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiError, apiSuccess } from '@/lib/utils'
-import { getStoragePath, getFileSize, assembleChunks } from '@/lib/storage'
+import { getStoragePath, getFileSize, assembleChunks, UPLOAD_DIR } from '@/lib/storage'
 import { scanFileContent } from '@/lib/scanner'
 import fs from 'fs'
 import path from 'path'
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: { fileId: str
       finalSize = await getFileSize(storagePath)
     } catch {
       // If direct file is not found, check if chunks directory exists as fallback
-      const chunkDir = path.join(process.env.UPLOAD_DIR || './storage/uploads', 'chunks', file.transferId, params.fileId)
+      const chunkDir = path.join(UPLOAD_DIR, 'chunks', file.transferId, params.fileId)
       try {
         const entries = await fs.promises.readdir(chunkDir)
         const totalChunks = entries.filter(e => e.startsWith('chunk_')).length
