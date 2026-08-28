@@ -3,7 +3,7 @@ import { prisma } from './prisma'
 
 function cleanEnv(val?: string) {
   if (!val) return ''
-  return val.replace(/^["']|["']$/g, '').trim()
+  return val.replace(/["'\r\n\t]/g, '').trim()
 }
 
 function getTransporter() {
