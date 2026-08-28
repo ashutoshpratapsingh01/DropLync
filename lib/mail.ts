@@ -1,4 +1,4 @@
-﻿import nodemailer from 'nodemailer'
+import nodemailer from 'nodemailer'
 import { prisma } from './prisma'
 
 function getTransporter() {
@@ -158,9 +158,10 @@ export async function sendTransferEmail(params: {
   totalSizeFormatted: string
   expiresAt: Date
   message?: string
+  hasPassword?: boolean
 }) {
   const { transporter, isLive } = getTransporter()
-  const { to, from, downloadUrl, transferId, transferName, totalFiles, totalSizeFormatted, expiresAt, message } = params
+  const { to, from, downloadUrl, transferId, transferName, totalFiles, totalSizeFormatted, expiresAt, message, hasPassword } = params
 
   const expiresFormatted = new Date(expiresAt).toLocaleDateString(undefined, {
     month: 'short',
@@ -180,7 +181,7 @@ export async function sendTransferEmail(params: {
         .logo span { font-size: 24px; font-weight: 900; color: #3b82f6; letter-spacing: -0.5px; }
         .title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 8px; color: #f8fafc; }
         .subtitle { font-size: 14px; color: #94a3b8; text-align: center; margin-bottom: 24px; line-height: 1.5; }
-        .meta-pill { display: inline-block; background: #1e293b; border: 1px solid #334155; border-radius: 30px; padding: 6px 16px; font-size: 13px; color: #94a3b8; margin: 0 4px 20px; }
+        .meta-pill { display: inline-block; background: #1e293b; border: 1px solid #334155; border-radius: 30px; padding: 6px 16px; font-size: 13px; color: #94a3b8; margin: 0 4px 10px; }
         .meta-container { text-align: center; margin-bottom: 20px; }
         .message-box { background: rgba(59, 130, 246, 0.08); border-left: 3px solid #3b82f6; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 14px; color: #cbd5e1; font-style: italic; }
         .btn { display: block; text-align: center; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff !important; padding: 14px 28px; border-radius: 12px; font-weight: 800; font-size: 15px; text-decoration: none; box-shadow: 0 10px 25px rgba(37,99,235,0.4); margin-bottom: 24px; }
@@ -199,6 +200,7 @@ export async function sendTransferEmail(params: {
           <span class="meta-pill">📦 ${totalFiles} file${totalFiles > 1 ? 's' : ''}</span>
           <span class="meta-pill">⚡ ${totalSizeFormatted}</span>
           <span class="meta-pill">⏳ Expires ${expiresFormatted}</span>
+          ${hasPassword ? '<span class="meta-pill" style="color: #60a5fa; border-color: #3b82f6;">🔒 Password Protected</span>' : ''}
         </div>
 
         ${message ? `<div class="message-box">"${message}"</div>` : ''}

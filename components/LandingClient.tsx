@@ -1054,7 +1054,7 @@ function SettingsStep({
         </button>
       </div>
 
-      <div style={{ display: 'grid', gap: 11, maxHeight: 290, overflowY: 'auto', paddingRight: 4 }}>
+      <div style={{ display: 'grid', gap: 12, maxHeight: 360, overflowY: 'auto', paddingRight: 4, paddingBottom: 4 }}>
         {/* Email Delivery Specific Inputs */}
         {deliveryMode === 'email' && (
           <>
@@ -1062,13 +1062,13 @@ function SettingsStep({
               <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Recipient email address(es)</label>
               <input
                 className="input"
-                style={{ padding: '8px 12px', fontSize: '0.86rem' }}
+                style={{ padding: '9px 12px', fontSize: '0.86rem' }}
                 placeholder="colleague@gmail.com, client@company.com"
                 value={recipientEmails}
                 onChange={e => setRecipientEmails(e.target.value)}
                 required
               />
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 2, display: 'block' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', marginTop: 3, display: 'block' }}>
                 Separate multiple recipients with commas
               </span>
             </div>
@@ -1078,7 +1078,7 @@ function SettingsStep({
               <input
                 className="input"
                 type="email"
-                style={{ padding: '8px 12px', fontSize: '0.86rem' }}
+                style={{ padding: '9px 12px', fontSize: '0.86rem' }}
                 placeholder="yourname@gmail.com"
                 value={senderEmail}
                 onChange={e => setSenderEmail(e.target.value)}
@@ -1090,7 +1090,7 @@ function SettingsStep({
               <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Message (Optional)</label>
               <input
                 className="input"
-                style={{ padding: '8px 12px', fontSize: '0.86rem' }}
+                style={{ padding: '9px 12px', fontSize: '0.86rem' }}
                 placeholder="Add a note for the recipients..."
                 value={emailMessage}
                 onChange={e => setEmailMessage(e.target.value)}
@@ -1103,7 +1103,7 @@ function SettingsStep({
           <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Transfer title (Optional)</label>
           <input
             className="input"
-            style={{ padding: '8px 12px', fontSize: '0.86rem' }}
+            style={{ padding: '9px 12px', fontSize: '0.86rem' }}
             placeholder="e.g. Q3 Design Deliverables"
             value={transferName}
             onChange={e => setTransferName(e.target.value)}
@@ -1113,7 +1113,7 @@ function SettingsStep({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
             <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Expires after</label>
-            <select className="select" style={{ padding: '8px 30px 8px 12px', fontSize: '0.84rem' }} value={expiry} onChange={e => setExpiry(e.target.value)}>
+            <select className="select" style={{ padding: '9px 30px 9px 12px', fontSize: '0.84rem' }} value={expiry} onChange={e => setExpiry(e.target.value)}>
               <option value="1">1 day</option>
               <option value="3">3 days</option>
               <option value="7">7 days (Free Standard)</option>
@@ -1123,7 +1123,7 @@ function SettingsStep({
           </div>
           <div>
             <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Download limit</label>
-            <select className="select" style={{ padding: '8px 30px 8px 12px', fontSize: '0.84rem' }} value={maxDownloads} onChange={e => setMaxDownloads(e.target.value)}>
+            <select className="select" style={{ padding: '9px 30px 9px 12px', fontSize: '0.84rem' }} value={maxDownloads} onChange={e => setMaxDownloads(e.target.value)}>
               <option value="0">Unlimited downloads</option>
               <option value="1">1 download only</option>
               <option value="5">5 downloads</option>
@@ -1139,7 +1139,7 @@ function SettingsStep({
           <input
             className="input"
             type="password"
-            style={{ padding: '8px 12px', fontSize: '0.86rem', marginBottom: password ? 6 : 0 }}
+            style={{ padding: '9px 12px', fontSize: '0.86rem', marginBottom: password ? 6 : 0 }}
             placeholder="Set an encryption password"
             value={password}
             onChange={e => setPassword(e.target.value)}
@@ -1148,7 +1148,7 @@ function SettingsStep({
             <input
               className="input"
               type="password"
-              style={{ padding: '8px 12px', fontSize: '0.86rem' }}
+              style={{ padding: '9px 12px', fontSize: '0.86rem' }}
               placeholder="Confirm password"
               value={passwordConfirm}
               onChange={e => setPasswordConfirm(e.target.value)}

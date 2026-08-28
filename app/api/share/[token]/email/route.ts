@@ -64,7 +64,8 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
       totalFiles: transfer.files.length,
       totalSizeFormatted,
       expiresAt: transfer.expiresAt,
-      message: message?.trim() || undefined
+      message: message?.trim() || undefined,
+      hasPassword: !!transfer.passwordHash
     })
 
     return apiSuccess({
