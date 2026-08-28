@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendOtpEmail } from '@/lib/mail'
 import { checkRateLimit } from '@/lib/utils'
@@ -22,33 +22,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Too many verification codes requested for this email. Please wait 60 seconds.' }, { status: 429 })
     }
 
-    // If type is 'register', check if account already exists
-    if (type === 'register') {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: normalizedEmail }
-      })
-      if (existingUser) {
-        return NextResponse.json({
-          error: 'An account with this email already exists. Please sign in instead.'
-        }, { status: 409 })
-      }
-    }
+    // Check user state if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail }
+    })
 
-    // If type is 'login', check if account exists
-    if (type === 'login') {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: normalizedEmail }
-      })
-      if (!existingUser) {
-        return NextResponse.json({
-          error: 'No account found with this email. Please create a free account first.'
-        }, { status: 404 })
-      }
-      if (!existingUser.isActive) {
-        return NextResponse.json({
-          error: 'This account has been deactivated. Please contact support.'
-        }, { status: 403 })
-      }
+    if (existingUser && !existingUser.isActive) {
+      return NextResponse.json({
+        error: 'This account has been deactivated. Please contact support.'
+      }, { status: 403 })
     }
 
     // Generate random 6-digit OTP

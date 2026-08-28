@@ -242,8 +242,30 @@ export default function LoginPage() {
 
             {/* Right: 3D Interactive Tilt Glass Form */}
             <div>
-              <Tilt3D intensity={6} glare={true} className="glass-panel" style={{ padding: '26px 30px', borderRadius: 24, width: '100%' }}>
+              <Tilt3D intensity={6} glare={true} className="glass-panel" style={{ padding: '24px 28px', borderRadius: 24, width: '100%' }}>
                 
+                {/* Auth Mode Switcher Tabs */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 4, background: 'var(--glass-bg-subtle)', borderRadius: 12, border: '1px solid var(--border)', marginBottom: 18 }}>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('otp'); setError(''); }}
+                    className={authMode === 'otp' ? 'btn-primary' : 'btn-ghost'}
+                    style={{ padding: '8px 12px', fontSize: '0.82rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8 }}
+                  >
+                    <ZapIcon size={14} />
+                    <span>Email OTP</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('password'); setError(''); }}
+                    className={authMode === 'password' ? 'btn-primary' : 'btn-ghost'}
+                    style={{ padding: '8px 12px', fontSize: '0.82rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8 }}
+                  >
+                    <ShieldLockIcon size={14} />
+                    <span>Password</span>
+                  </button>
+                </div>
+
                 {/* OTP Flow: Step 1 (Enter Email) */}
                 {authMode === 'otp' && step === 'email' && (
                   <div>

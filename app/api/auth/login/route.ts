@@ -12,12 +12,13 @@ export async function POST(req: NextRequest) {
   const { email, password } = await req.json()
   if (!email || !password) return apiError('Email and password required')
 
-  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
-  if (!user || !user.passwordHash) return apiError('Invalid credentials', 401)
-  if (!user.isActive) return apiError('Account disabled', 403)
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } })
+  if (!user) return apiError('No account found with this email. Please sign in using Email OTP or create a free account.', 401)
+  if (!user.passwordHash) return apiError('This account was created with Email OTP and has no password set. Please switch to Email OTP Sign In.', 401)
+  if (!user.isActive) return apiError('Account disabled. Please contact support.', 403)
 
   const valid = await verifyPassword(password, user.passwordHash)
-  if (!valid) return apiError('Invalid credentials', 401)
+  if (!valid) return apiError('Incorrect password. Please try again or use Email OTP to sign in.', 401)
 
   const token = generateToken(user.id)
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
