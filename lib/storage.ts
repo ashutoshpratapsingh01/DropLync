@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './storage/uploads'
+const UPLOAD_DIR = process.env.UPLOAD_DIR || (process.env.VERCEL ? '/tmp/storage/uploads' : './storage/uploads')
 
 export interface StorageObject {
   path: string
