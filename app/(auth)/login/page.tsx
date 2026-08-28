@@ -199,27 +199,27 @@ export default function LoginPage() {
                 <span className="stat-pill" style={{ padding: '5px 14px', fontSize: '0.82rem', borderColor: 'rgba(37,99,235,0.3)', background: 'rgba(37,99,235,0.08)' }}>
                   <span className="pulse-dot" style={{ width: 7, height: 7 }} />
                   <span style={{ fontWeight: 800, color: 'var(--brand)', letterSpacing: '0.02em' }}>
-                    10GB Free Storage · Secure Dashboard Sign In
+                    10GB Free Storage · Secure OTP Sign In
                   </span>
                 </span>
               </div>
 
               <h1 style={{ fontSize: 'clamp(2.15rem, 3.4vw, 3rem)', fontWeight: 900, lineHeight: 1.12, marginBottom: 12, letterSpacing: '-0.04em', color: 'var(--text-1)' }}>
                 Welcome back.<br />
-                <span className="gradient-text">Control links from your dashboard.</span>
+                <span className="gradient-text">Manage your files & streams.</span>
               </h1>
 
               <p style={{ fontSize: '0.98rem', color: 'var(--text-2)', maxWidth: 470, lineHeight: 1.6, marginBottom: 18 }}>
-                Sign in to your personal dashboard to control active transfer links, track recipient download analytics in real time, enable or disable links, and manage security settings.
+                Sign in with your email address to manage active transfer links, track recipient download analytics, and access upgraded <strong>50GB to 200GB+ storage vaults</strong>.
               </p>
 
               {/* Feature Value Cards */}
               <div className="responsive-grid-2" style={{ marginBottom: 18, maxWidth: 450 }}>
                 {[
-                  { title: 'Dashboard Link Controls', icon: <ServerStackIcon size={17} color="var(--brand)" /> },
-                  { title: 'Live Download Tracking', icon: <ZapIcon size={17} color="var(--brand)" /> },
-                  { title: '10GB Free per Transfer', icon: <ArrowUpTrayIcon size={17} color="var(--brand)" /> },
-                  { title: 'Encrypted Password Vaults', icon: <ShieldLockIcon size={17} color="#059669" /> }
+                  { title: '10GB Free Transfers', icon: <ArrowUpTrayIcon size={17} color="var(--brand)" /> },
+                  { title: 'Encrypted Link Vaults', icon: <ShieldLockIcon size={17} color="var(--brand)" /> },
+                  { title: 'Live Download Tracking', icon: <ServerStackIcon size={17} color="var(--brand)" /> },
+                  { title: 'Auto-Purging Storage', icon: <CheckCircleIcon size={17} color="#059669" /> }
                 ].map((item, i) => (
                   <div key={i} className="card-soft card-hover" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12 }}>
                     <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{item.icon}</span>

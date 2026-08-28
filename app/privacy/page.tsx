@@ -112,6 +112,8 @@ export default async function PrivacyPage() {
           <a href="/terms" style={{ color: 'var(--text-3)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: 600 }}>Terms of Service</a>
           <span style={{ color: 'var(--border)' }}>·</span>
           <a href="/security" style={{ color: 'var(--text-3)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: 600 }}>Security Architecture</a>
+          <span style={{ color: 'var(--border)' }}>·</span>
+          <a href="/pricing" style={{ color: 'var(--brand)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: 700 }}>Pricing & Plans</a>
         </div>
       </main>
     </div>
