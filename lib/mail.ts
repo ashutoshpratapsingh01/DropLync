@@ -2,29 +2,21 @@ import nodemailer from 'nodemailer'
 import { prisma } from './prisma'
 
 function getTransporter() {
-  const service = process.env.SMTP_SERVICE // e.g. 'gmail'
-  const host = process.env.SMTP_HOST
-  const port = parseInt(process.env.SMTP_PORT || '587')
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com'
+  const port = parseInt(process.env.SMTP_PORT || '465')
 
-  if (service?.toLowerCase() === 'gmail' && user && pass) {
-    return {
-      transporter: nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user, pass }
-      }),
-      isLive: true
-    }
-  }
-
-  if (host && user && pass) {
+  if (user && pass) {
     return {
       transporter: nodemailer.createTransport({
         host,
-        port,
+        port: port === 465 ? 465 : port,
         secure: port === 465,
         auth: { user, pass },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
         tls: { rejectUnauthorized: false }
       }),
       isLive: true
@@ -47,7 +39,7 @@ function getTransporter() {
   }
 }
 
-const DEFAULT_FROM = process.env.SMTP_FROM || process.env.SMTP_USER || 'DropLync <noreply@droplync.com>'
+const DEFAULT_FROM = process.env.SMTP_FROM || (process.env.SMTP_USER ? `DropLync <${process.env.SMTP_USER}>` : 'DropLync <noreply@droplync.com>')
 
 export async function sendOtpEmail(email: string, otp: string, type: string = 'auth') {
   const { transporter, isLive } = getTransporter()
@@ -122,29 +114,8 @@ export async function sendOtpEmail(email: string, otp: string, type: string = 'a
 
     return { success: true, info }
   } catch (err: any) {
-    console.warn(`[SMTP Warning] Could not send via remote mail server (${err.message}). Using local fallback.`)
-    console.log('=================================================================')
-    console.log(`🔑 [DROPLYNC VERIFICATION CODE]`)
-    console.log(`Recipient: ${email}`)
-    console.log(`OTP Code:  ${otp}`)
-    console.log(`Type:      ${type}`)
-    console.log('=================================================================')
-
-    // Record in Prisma Database as dev fallback
-    try {
-      await prisma.emailLog.create({
-        data: {
-          recipient: email.toLowerCase().trim(),
-          sender: DEFAULT_FROM,
-          subject,
-          type: `otp_${type}`,
-          status: 'logged_dev',
-          metadata: JSON.stringify({ code: otp, type, fallback: true, error: err.message })
-        }
-      })
-    } catch (dbErr) {}
-
-    return { success: true, fallback: true }
+    console.error(`[SMTP Error] Failed to send to ${email}:`, err)
+    throw new Error(`Email dispatch failed: ${err.message || 'SMTP Connection Error'}`)
   }
 }
 
@@ -244,7 +215,7 @@ export async function sendTransferEmail(params: {
 
     return { success: true }
   } catch (err: any) {
-    console.warn(`[SMTP Warning] Transfer notification email fallback: ${err.message}`)
-    return { success: true, fallback: true }
+    console.error(`[SMTP Error] Transfer notification email failed: ${err.message}`)
+    throw new Error(`Failed to send transfer email: ${err.message || 'SMTP Connection Error'}`)
   }
 }
