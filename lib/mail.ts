@@ -1,11 +1,17 @@
 import nodemailer from 'nodemailer'
 import { prisma } from './prisma'
 
+function cleanEnv(val?: string) {
+  if (!val) return ''
+  return val.replace(/^["']|["']$/g, '').trim()
+}
+
 function getTransporter() {
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASS
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com'
-  const port = parseInt(process.env.SMTP_PORT || '465')
+  const user = cleanEnv(process.env.SMTP_USER)
+  const pass = cleanEnv(process.env.SMTP_PASS)
+  const host = cleanEnv(process.env.SMTP_HOST) || 'smtp.gmail.com'
+  const rawPort = cleanEnv(process.env.SMTP_PORT) || '465'
+  const port = parseInt(rawPort, 10) || 465
 
   if (user && pass) {
     return {
@@ -39,7 +45,7 @@ function getTransporter() {
   }
 }
 
-const DEFAULT_FROM = process.env.SMTP_FROM || (process.env.SMTP_USER ? `DropLync <${process.env.SMTP_USER}>` : 'DropLync <noreply@droplync.com>')
+const DEFAULT_FROM = cleanEnv(process.env.SMTP_FROM) || (cleanEnv(process.env.SMTP_USER) ? `DropLync <${cleanEnv(process.env.SMTP_USER)}>` : 'DropLync <noreply@droplync.com>')
 
 export async function sendOtpEmail(email: string, otp: string, type: string = 'auth') {
   const { transporter, isLive } = getTransporter()
