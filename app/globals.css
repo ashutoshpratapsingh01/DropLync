@@ -598,19 +598,61 @@ html.dark .badge-expired { color: #f87171; }
 
 /* ── Theme Toggle ── */
 .theme-toggle {
-  width: 48px; height: 26px; border-radius: 999px;
-  background: var(--bg-muted); border: 1.5px solid var(--border-mid);
-  cursor: pointer; position: relative; transition: all 250ms ease;
-  flex-shrink: 0; display: flex; align-items: center; padding: 2px;
+  width: 58px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  border: 1.5px solid var(--border-mid);
+  cursor: pointer;
+  position: relative;
+  transition: all 250ms ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justifyContent: space-between;
+  padding: 3px 5px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
 }
-html.dark .theme-toggle { background: var(--brand); border-color: var(--brand); }
+
+html.dark .theme-toggle {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 12px rgba(59, 130, 246, 0.2);
+}
+
+.theme-toggle-track-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  z-index: 1;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
 .theme-toggle-thumb {
-  width: 18px; height: 18px; border-radius: 50%; background: white;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
-  transition: transform 250ms var(--ease-spring);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 280ms var(--ease-spring), background 250ms ease;
   transform: translateX(0);
+  position: absolute;
+  left: 3px;
+  top: 2.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
 }
-html.dark .theme-toggle-thumb { transform: translateX(22px); }
+
+html.dark .theme-toggle-thumb {
+  transform: translateX(28px);
+  background: #1e293b;
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 8px rgba(59, 130, 246, 0.4);
+}
 
 /* ── Pricing Featured Card ── */
 .pricing-featured {

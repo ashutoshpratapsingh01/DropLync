@@ -2,20 +2,25 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ZapIcon, XIcon } from '@/components/ui/Icons'
+import { ZapIcon, XIcon, SunIcon, MoonIcon } from '@/components/ui/Icons'
 import Logo from '@/components/Logo'
 
 function ThemeToggle() {
   const [dark, setDark] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
   useEffect(() => {
     setDark(document.documentElement.classList.contains('dark'))
+    setMounted(true)
   }, [])
+
   function toggle() {
     const next = !dark
     setDark(next)
     document.documentElement.classList.toggle('dark', next)
     localStorage.setItem('theme', next ? 'dark' : 'light')
   }
+
   return (
     <button
       onClick={toggle}
@@ -23,7 +28,21 @@ function ThemeToggle() {
       title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label="Toggle theme"
     >
-      <div className="theme-toggle-thumb" />
+      <span className="theme-toggle-track-icon" style={{ opacity: dark ? 0.35 : 0, color: '#f59e0b' }}>
+        <SunIcon size={13} color="#f59e0b" />
+      </span>
+      <span className="theme-toggle-track-icon" style={{ opacity: dark ? 0 : 0.35, color: '#94a3b8' }}>
+        <MoonIcon size={13} color="#94a3b8" />
+      </span>
+      <div className="theme-toggle-thumb">
+        {mounted && (
+          dark ? (
+            <MoonIcon size={12} color="#60a5fa" />
+          ) : (
+            <SunIcon size={13} color="#d97706" />
+          )
+        )}
+      </div>
     </button>
   )
 }
