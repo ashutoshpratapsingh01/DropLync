@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: droplync-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/storage/prod.db
+      - UPLOAD_DIR=/app/storage/uploads
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
+      - CLAMAV_TIMEOUT_MS=60000
+      - CLAMAV_FALLBACK_MODE=fail_closed
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      clamav:
+        condition: service_healthy
+
+  clamav:
+    image: clamav/clamav:latest
+    container_name: droplync-clamav
+    restart: unless-stopped
+    ports:
+      # Bound strictly to localhost/internal network (never exposed to public internet)
+      - "127.0.0.1:3310:3310"
+    environment:
+      # Increase max stream and scan sizes for large file transfers
+      - CLAMD_CONF_MaxScanSize=1000M
+      - CLAMD_CONF_MaxFileSize=1000M
+      - CLAMD_CONF_StreamMaxLength=1000M
+      # Run freshclam definition auto-updates 12 times a day (every 2 hours)
+      - FRESHCLAM_CHECKS=12
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1.5G
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --ping 3310 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    volumes:
+      - clamav-signatures:/var/lib/clamav
+
+volumes:
+  clamav-signatures:
+    driver: local
