@@ -1,10 +1,11 @@
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { redirect } from 'next/navigation'
 import DashboardClient from '@/components/DashboardClient'
 
 export default async function DashboardPage() {
   const user = await getSession()
-  if (!user) return null
+  if (!user) redirect('/login')
 
   const [transfers, stats] = await Promise.all([
     prisma.transfer.findMany({

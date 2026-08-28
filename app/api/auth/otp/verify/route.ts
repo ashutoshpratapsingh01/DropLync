@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateToken, hashPassword } from '@/lib/auth'
 import { apiError, apiSuccess, checkRateLimit } from '@/lib/utils'
@@ -97,17 +97,9 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // Set HTTP-only auth cookie
-    const cookieStore = cookies()
-    cookieStore.set('auth_token', sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      expires: expiresAt,
-      path: '/'
-    })
-
-    return apiSuccess({
+    const response = NextResponse.json({
+      success: true,
+      token: sessionToken,
       user: {
         id: user.id,
         email: user.email,
@@ -116,6 +108,16 @@ export async function POST(req: NextRequest) {
         plan: user.plan
       }
     })
+
+    response.cookies.set('auth_token', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      expires: expiresAt,
+      path: '/'
+    })
+
+    return response
   } catch (err: any) {
     console.error('OTP Verify Error:', err)
     return apiError(err.message || 'Verification failed', 500)

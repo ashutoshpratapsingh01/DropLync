@@ -110,8 +110,7 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/dashboard')
-      router.refresh()
+      window.location.href = '/dashboard'
     } catch (err: any) {
       setLoading(false)
       setError('Verification failed. Please try again.')
@@ -173,8 +172,7 @@ export default function LoginPage() {
       setError(data.error)
       return
     }
-    router.push('/dashboard')
-    router.refresh()
+    window.location.href = '/dashboard'
   }
 
   return (

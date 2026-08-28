@@ -1,8 +1,7 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword, generateToken } from '@/lib/auth'
-import { apiError, apiSuccess, checkRateLimit } from '@/lib/utils'
-import { cookies } from 'next/headers'
+import { apiError, checkRateLimit } from '@/lib/utils'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
@@ -24,13 +23,21 @@ export async function POST(req: NextRequest) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   await prisma.session.create({ data: { userId: user.id, token, expiresAt } })
 
-  const cookieStore = cookies()
-  cookieStore.set('auth_token', token, {
-    httpOnly: true, secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax', expires: expiresAt, path: '/'
-  })
-
   await prisma.auditLog.create({ data: { userId: user.id, action: 'login', ipAddress: ip } })
 
-  return apiSuccess({ user: { id: user.id, email: user.email, name: user.name, role: user.role } })
+  const response = NextResponse.json({
+    success: true,
+    token,
+    user: { id: user.id, email: user.email, name: user.name, role: user.role }
+  })
+
+  response.cookies.set('auth_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    expires: expiresAt,
+    path: '/'
+  })
+
+  return response
 }

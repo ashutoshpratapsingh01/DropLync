@@ -67,12 +67,14 @@ function serializeBigInt(obj: any): any {
   return obj
 }
 
+import { NextResponse } from 'next/server'
+
 export function apiError(message: string, status = 400) {
-  return Response.json({ error: message }, { status })
+  return NextResponse.json({ error: message }, { status })
 }
 
 export function apiSuccess(data: unknown, status = 200) {
-  return Response.json(serializeBigInt(data), { status })
+  return NextResponse.json(serializeBigInt(data), { status })
 }
 
 // Rate limiting (in-memory, use Redis in production)
