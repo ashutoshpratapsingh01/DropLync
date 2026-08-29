@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node tests/auth_otp.test.js && node tests/storage_chunking.test.js",
+    "test:all": "node tests/auth_otp.test.js && node tests/storage_chunking.test.js && node tests/full_flow_integration.test.js",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",

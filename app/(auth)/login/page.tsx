@@ -24,6 +24,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
+  const [otpToken, setOtpToken] = useState('')
   const [countdown, setCountdown] = useState(60)
   const [canResend, setCanResend] = useState(false)
   const [error, setError] = useState('')
@@ -77,6 +78,10 @@ export default function LoginPage() {
         return
       }
 
+      if (data.otpToken) {
+        setOtpToken(data.otpToken)
+      }
+
       setStep('otp')
       setCountdown(60)
       setCanResend(false)
@@ -104,7 +109,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail, code })
+        body: JSON.stringify({ email: cleanEmail, code, otpToken })
       })
       const data = await res.json()
 

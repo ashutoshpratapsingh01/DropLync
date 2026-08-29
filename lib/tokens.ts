@@ -20,6 +20,61 @@ export interface UploadTicketPayload {
   expiresAt?: string
 }
 
+export interface OtpTicketPayload {
+  email: string
+  codeHash: string
+  type: string
+  expiresAt: string
+}
+
+import crypto from 'crypto'
+
+export function hashOtpCode(code: string): string {
+  return crypto.createHash('sha256').update(code.trim()).digest('hex')
+}
+
+export function signOtpTicket(payload: { email: string; code: string; type?: string; expiresAt?: Date }): string {
+  const normalizedEmail = payload.email.toLowerCase().trim()
+  const codeHash = hashOtpCode(payload.code)
+  const exp = payload.expiresAt ? payload.expiresAt.toISOString() : new Date(Date.now() + 10 * 60 * 1000).toISOString()
+
+  const data: OtpTicketPayload = {
+    email: normalizedEmail,
+    codeHash,
+    type: payload.type || 'auth',
+    expiresAt: exp
+  }
+
+  return jwt.sign(data, JWT_SECRET, { expiresIn: '15m' })
+}
+
+export function verifyOtpTicket(ticket: string, email: string, inputCode: string): { valid: boolean; reason?: string } {
+  try {
+    const payload = jwt.verify(ticket, JWT_SECRET) as OtpTicketPayload
+    if (!payload || !payload.email || !payload.codeHash) {
+      return { valid: false, reason: 'Invalid OTP ticket payload' }
+    }
+
+    const normalizedEmail = email.toLowerCase().trim()
+    if (payload.email !== normalizedEmail) {
+      return { valid: false, reason: 'Email mismatch on OTP ticket' }
+    }
+
+    if (new Date(payload.expiresAt).getTime() < Date.now()) {
+      return { valid: false, reason: 'OTP code has expired' }
+    }
+
+    const inputHash = hashOtpCode(inputCode)
+    if (payload.codeHash !== inputHash) {
+      return { valid: false, reason: 'Incorrect verification code' }
+    }
+
+    return { valid: true }
+  } catch (err: any) {
+    return { valid: false, reason: err.message || 'Invalid or expired OTP ticket' }
+  }
+}
+
 export function signTransferToken(payload: TransferPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' })
 }

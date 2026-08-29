@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
+  const [otpToken, setOtpToken] = useState('')
   const [countdown, setCountdown] = useState(60)
   const [canResend, setCanResend] = useState(false)
   const [error, setError] = useState('')
@@ -31,6 +32,7 @@ export default function RegisterPage() {
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([])
 
+  // Countdown timer for OTP resend
   useEffect(() => {
     let timer: any
     if (step === 'otp' && countdown > 0) {
@@ -41,6 +43,7 @@ export default function RegisterPage() {
     return () => clearInterval(timer)
   }, [step, countdown])
 
+  // Auto-focus first OTP box when entering OTP step
   useEffect(() => {
     if (step === 'otp' && otpInputsRef.current[0]) {
       setTimeout(() => otpInputsRef.current[0]?.focus(), 150)
@@ -74,6 +77,10 @@ export default function RegisterPage() {
         return
       }
 
+      if (data.otpToken) {
+        setOtpToken(data.otpToken)
+      }
+
       setStep('otp')
       setCountdown(60)
       setCanResend(false)
@@ -101,7 +108,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail, code, name: name.trim(), password })
+        body: JSON.stringify({ email: cleanEmail, code, name: name.trim(), password, otpToken })
       })
       const data = await res.json()
 

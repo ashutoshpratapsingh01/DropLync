@@ -6,7 +6,16 @@ import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 
-const JWT_SECRET = process.env.JWT_SECRET!
+const JWT_SECRET = process.env.JWT_SECRET || 'droplync-super-secret-jwt-key-change-in-production-min-32-chars'
+
+export interface UserSessionPayload {
+  userId: string
+  email?: string
+  name?: string | null
+  role?: string
+  plan?: string
+  nonce?: string
+}
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 12)
@@ -16,13 +25,24 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash)
 }
 
-export function generateToken(userId: string): string {
-  return jwt.sign({ userId, nonce: uuidv4() }, JWT_SECRET, { expiresIn: '7d' })
+export function generateToken(user: string | { id: string; email: string; name?: string | null; role?: string; plan?: string }): string {
+  const payload: UserSessionPayload = typeof user === 'string'
+    ? { userId: user, nonce: uuidv4() }
+    : {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role || 'user',
+        plan: user.plan || 'free',
+        nonce: uuidv4()
+      }
+
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
 }
 
-export function verifyToken(token: string): { userId: string } | null {
+export function verifyToken(token: string): UserSessionPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: string }
+    return jwt.verify(token, JWT_SECRET) as UserSessionPayload
   } catch {
     return null
   }
@@ -50,12 +70,50 @@ export async function getSession() {
       return session.user
     }
 
-    // 2. Fallback: Lookup user directly from valid cryptographically verified JWT payload
+    // 2. Lookup user directly from database
     const user = await prisma.user.findUnique({
       where: { id: payload.userId }
     })
     if (user && user.isActive) {
       return user
+    }
+
+    // 3. Resilient Fallback for Serverless Isolation: Reconstruct from verified signed JWT claims
+    if (payload.email) {
+      const fallbackUser: any = {
+        id: payload.userId,
+        email: payload.email,
+        name: payload.name || payload.email.split('@')[0],
+        role: payload.role || 'user',
+        plan: payload.plan || 'free',
+        brandColor: null,
+        brandLogo: null,
+        brandWallpaper: null,
+        passwordHash: null,
+        avatar: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+
+      try {
+        await prisma.user.upsert({
+          where: { id: payload.userId },
+          update: {},
+          create: {
+            id: payload.userId,
+            email: payload.email,
+            name: fallbackUser.name,
+            role: fallbackUser.role,
+            plan: fallbackUser.plan,
+            isActive: true
+          }
+        })
+      } catch (upsertErr) {
+        console.warn('Session user upsert fallback warning:', upsertErr)
+      }
+
+      return fallbackUser
     }
   } catch (err) {
     console.error('getSession db error:', err)

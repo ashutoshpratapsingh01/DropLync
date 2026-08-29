@@ -1,0 +1,6 @@
+.git
+node_modules
+storage
+public/uploads
+*.log
+scratch
