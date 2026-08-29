@@ -1,17 +1,23 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiError, checkRateLimit, anonymizeIp } from '@/lib/utils'
-
+import { verifyTransferToken } from '@/lib/tokens'
+import { UPLOAD_DIR } from '@/lib/storage'
 import bcrypt from 'bcryptjs'
 import archiver from 'archiver'
 import fs from 'fs'
+import path from 'path'
 import { PassThrough } from 'stream'
+
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60
+export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest, { params }: { params: { token: string } }) {
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
   if (!checkRateLimit(`download-all:${ip}`, 10, 60000)) return apiError('Too many requests', 429)
 
-  const transfer = await prisma.transfer.findFirst({
+  let transfer = await prisma.transfer.findFirst({
     where: {
       OR: [
         { token: params.token },
@@ -21,6 +27,46 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
     include: { files: true }
   })
 
+  // If not found in local DB (Serverless DB isolation), verify signed token and locate files on disk
+  let validFiles: { originalName: string; storagePath: string; relativePath?: string | null }[] = []
+
+  if (!transfer) {
+    const verified = verifyTransferToken(params.token)
+    if (verified) {
+      const transferDir = path.join(UPLOAD_DIR, 'files', verified.transferId)
+      if (fs.existsSync(transferDir)) {
+        try {
+          const diskFiles = await fs.promises.readdir(transferDir)
+          for (const df of diskFiles) {
+            const filePath = path.join(transferDir, df)
+            if (fs.existsSync(filePath)) {
+              validFiles.push({
+                originalName: df,
+                storagePath: filePath,
+                relativePath: df
+              })
+            }
+          }
+          transfer = {
+            id: verified.transferId,
+            token: params.token,
+            isActive: true,
+            expiresAt: new Date(verified.expiresAt),
+            maxDownloads: null,
+            downloadCount: 0,
+            passwordHash: null,
+            name: verified.name || 'Transfer'
+          } as any
+        } catch (e) {
+          console.warn('Disk file reading warning for download-all:', e)
+        }
+      }
+    }
+  } else {
+    validFiles = transfer.files.filter(
+      file => file.storagePath && fs.existsSync(file.storagePath)
+    ) as any
+  }
 
   if (!transfer || !transfer.isActive) return apiError('Transfer not found', 404)
   if (transfer.expiresAt < new Date()) return apiError('Transfer expired', 410)
@@ -35,36 +81,32 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
     if (!valid) return apiError('Incorrect password', 401)
   }
 
-  // Filter to only files that actually exist on disk
-  const validFiles = transfer.files.filter(
-    file => file.storagePath && fs.existsSync(file.storagePath)
-  )
-
   if (validFiles.length === 0) {
     return apiError('No downloadable files found in this transfer', 404)
   }
 
-  // Log bulk download (fire-and-forget — don't block the stream)
-  prisma.downloadLog.create({
-    data: {
-      transferId: transfer.id,
-      ipAddress: anonymizeIp(ip),
-      userAgent: req.headers.get('user-agent') || ''
-    }
-  }).catch(() => {})
+  // Log bulk download
+  try {
+    prisma.downloadLog.create({
+      data: {
+        transferId: transfer.id,
+        ipAddress: anonymizeIp(ip),
+        userAgent: req.headers.get('user-agent') || ''
+      }
+    }).catch(() => {})
 
-  prisma.transfer.update({
-    where: { id: transfer.id },
-    data: { downloadCount: { increment: 1 } }
-  }).catch(() => {})
+    prisma.transfer.update({
+      where: { id: transfer.id },
+      data: { downloadCount: { increment: 1 } }
+    }).catch(() => {})
+  } catch {}
 
   const passThrough = new PassThrough()
   const archive = archiver('zip', {
-    zlib: { level: 1 }, // Use fast compression for large files — level 1 instead of 6
-    highWaterMark: 1024 * 1024 // 1MB buffer for better throughput
+    zlib: { level: 1 },
+    highWaterMark: 1024 * 1024
   })
 
-  // Handle archiver errors
   archive.on('error', (err) => {
     try { passThrough.destroy(err) } catch {}
   })
@@ -75,19 +117,13 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
     }
   })
 
-  // Pipe archive → passThrough BEFORE adding files
   archive.pipe(passThrough)
 
-  // Add all valid files to the archive (preserving relativePath folder hierarchy)
   for (const file of validFiles) {
     const entryName = (file as any).relativePath || file.originalName
     archive.file(file.storagePath, { name: entryName })
   }
 
-
-  // Bridge PassThrough → Web ReadableStream with proper backpressure
-  // Set up the ReadableStream BEFORE calling archive.finalize()
-  // so we don't miss any early data events
   const webStream = new ReadableStream({
     start(controller) {
       passThrough.on('error', (err) => {
@@ -100,54 +136,45 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
         if (chunk !== null) {
           controller.enqueue(new Uint8Array(chunk))
           resolve()
-          return
-        }
-
-        // No data available yet — wait for 'readable' or 'end'
-        const onReadable = () => {
-          cleanup()
-          const data = passThrough.read()
-          if (data !== null) {
-            controller.enqueue(new Uint8Array(data))
+        } else {
+          const onReadable = () => {
+            passThrough.removeListener('readable', onReadable)
+            passThrough.removeListener('end', onEnd)
+            const newChunk = passThrough.read()
+            if (newChunk !== null) {
+              controller.enqueue(new Uint8Array(newChunk))
+            }
+            resolve()
           }
-          resolve()
+          const onEnd = () => {
+            passThrough.removeListener('readable', onReadable)
+            passThrough.removeListener('end', onEnd)
+            try { controller.close() } catch {}
+            resolve()
+          }
+          passThrough.once('readable', onReadable)
+          passThrough.once('end', onEnd)
         }
-        const onEnd = () => {
-          cleanup()
-          try { controller.close() } catch {}
-          resolve()
-        }
-        const onError = (err: Error) => {
-          cleanup()
-          try { controller.error(err) } catch {}
-          resolve()
-        }
-        const cleanup = () => {
-          passThrough.removeListener('readable', onReadable)
-          passThrough.removeListener('end', onEnd)
-          passThrough.removeListener('error', onError)
-        }
-
-        passThrough.on('readable', onReadable)
-        passThrough.on('end', onEnd)
-        passThrough.on('error', onError)
       })
     },
     cancel() {
-      archive.abort()
-      passThrough.destroy()
+      try { passThrough.destroy() } catch {}
+      try { archive.abort() } catch {}
     }
   })
 
-  // NOW finalize the archive — after the ReadableStream is already listening
-  archive.finalize()
+  archive.finalize().catch((err) => {
+    console.error('Archiver finalize error:', err)
+  })
 
-  const zipName = (transfer.name || 'droplync-transfer').replace(/[^a-zA-Z0-9\-_]/g, '_')
+  const zipFilename = `${(transfer.name || 'DropLync_Files').replace(/[/\\?%*:|"<>]/g, '_')}.zip`
+
   return new Response(webStream, {
+    status: 200,
     headers: {
       'Content-Type': 'application/zip',
-      'Content-Disposition': `attachment; filename="${zipName}.zip"`,
-      'Cache-Control': 'no-store'
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(zipFilename)}"`,
+      'Cache-Control': 'no-store',
     }
   })
 }

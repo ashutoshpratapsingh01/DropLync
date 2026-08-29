@@ -1,11 +1,14 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiError, checkRateLimit, anonymizeIp } from '@/lib/utils'
-
+import { verifyTransferToken } from '@/lib/tokens'
+import { UPLOAD_DIR, getStoragePath } from '@/lib/storage'
 import bcrypt from 'bcryptjs'
 import fs from 'fs'
 import path from 'path'
-import { Readable } from 'stream'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function GET(
   req: NextRequest,
@@ -15,7 +18,7 @@ export async function GET(
   if (!checkRateLimit(`download:${ip}`, 40, 60000)) return apiError('Too many requests', 429)
 
   try {
-    const transfer = await prisma.transfer.findFirst({
+    let transfer = await prisma.transfer.findFirst({
       where: {
         OR: [
           { token: params.token },
@@ -25,6 +28,38 @@ export async function GET(
       include: { files: { where: { id: params.fileId } } }
     })
 
+    let file = transfer?.files[0]
+    let filePath: string | null = file?.storagePath || null
+
+    // If not found in local DB (Serverless DB isolation), verify signed token and locate file directly on disk
+    if (!transfer || !file || !filePath || !fs.existsSync(filePath)) {
+      const verified = verifyTransferToken(params.token)
+      if (verified) {
+        const transferDir = path.join(UPLOAD_DIR, 'files', verified.transferId)
+        if (fs.existsSync(transferDir)) {
+          const filesInDir = await fs.promises.readdir(transferDir)
+          const targetFilename = filesInDir.find(f => f.startsWith(params.fileId) || path.parse(f).name === params.fileId) || filesInDir[0]
+          if (targetFilename) {
+            filePath = path.join(transferDir, targetFilename)
+            file = {
+              id: params.fileId,
+              originalName: targetFilename,
+              mimeType: 'application/octet-stream',
+              storagePath: filePath
+            } as any
+            transfer = {
+              id: verified.transferId,
+              token: params.token,
+              isActive: true,
+              expiresAt: new Date(verified.expiresAt),
+              maxDownloads: null,
+              downloadCount: 0,
+              passwordHash: null
+            } as any
+          }
+        }
+      }
+    }
 
     if (!transfer || !transfer.isActive) return apiError('Transfer not found', 404)
     if (transfer.expiresAt < new Date()) return apiError('Transfer expired', 410)
@@ -40,40 +75,29 @@ export async function GET(
       if (!valid) return apiError('Incorrect password', 401)
     }
 
-    const file = transfer.files[0]
-    if (!file || !file.storagePath) {
-      return apiError('File record not found', 404)
-    }
-
-    let filePath = file.storagePath
-    if (!fs.existsSync(filePath)) {
-      filePath = path.resolve(file.storagePath)
-    }
-    if (!fs.existsSync(filePath) && file.storagePath.includes('public')) {
-      filePath = path.resolve(file.storagePath.replace(/public[/\\]uploads/, 'storage/uploads'))
-    }
-
-    if (!fs.existsSync(filePath)) {
+    if (!filePath || !fs.existsSync(filePath)) {
       return apiError('File not found on storage', 404)
     }
 
     const stat = fs.statSync(filePath)
     const fileSize = stat.size
+    const originalName = file?.originalName || path.basename(filePath)
+    const mimeType = file?.mimeType || 'application/octet-stream'
 
+    // Non-blocking download log and count update
+    try {
+      prisma.downloadLog.create({
+        data: {
+          transferId: transfer.id,
+          fileId: params.fileId,
+          ipAddress: anonymizeIp(ip),
+          userAgent: req.headers.get('user-agent') || ''
+        }
+      }).catch(() => {})
 
-    // Non-blocking download log and count update (GDPR-compliant anonymized IP)
-    prisma.downloadLog.create({
-      data: {
-        transferId: transfer.id,
-        fileId: file.id,
-        ipAddress: anonymizeIp(ip),
-        userAgent: req.headers.get('user-agent') || ''
-      }
-    }).catch(() => {})
-
-    prisma.transferFile.update({ where: { id: file.id }, data: { downloadCount: { increment: 1 } } }).catch(() => {})
-    prisma.transfer.update({ where: { id: transfer.id }, data: { downloadCount: { increment: 1 } } }).catch(() => {})
-
+      prisma.transferFile.update({ where: { id: params.fileId }, data: { downloadCount: { increment: 1 } } }).catch(() => {})
+      prisma.transfer.update({ where: { id: transfer.id }, data: { downloadCount: { increment: 1 } } }).catch(() => {})
+    } catch {}
 
     // Support Range requests for resumable downloads of large files
     const rangeHeader = req.headers.get('range')
@@ -81,8 +105,8 @@ export async function GET(
     let end = fileSize - 1
     let status = 200
     const headers: Record<string, string> = {
-      'Content-Type': file.mimeType || 'application/octet-stream',
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(file.originalName)}"`,
+      'Content-Type': mimeType,
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(originalName)}"`,
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'no-store',
     }
@@ -105,7 +129,7 @@ export async function GET(
 
     headers['Content-Length'] = (end - start + 1).toString()
 
-    const nodeStream = fs.createReadStream(file.storagePath, { start, end })
+    const nodeStream = fs.createReadStream(filePath, { start, end })
 
     let isClosed = false
     const webStream = new ReadableStream({
