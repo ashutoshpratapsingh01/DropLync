@@ -32,7 +32,7 @@ type Stats = { total: number; active: number; expired: number; totalDownloads: n
 export default function DashboardClient({
   user: initialUser, transfers: initialTransfers, stats
 }: {
-  user: { name?: string | null; email: string; plan?: string } | null
+  user: { name?: string | null; email: string; plan?: string }
   transfers: Transfer[]
   stats: Stats
 }) {
@@ -50,25 +50,6 @@ export default function DashboardClient({
     if (initialUser) setCurrentUser(initialUser)
     if (initialTransfers) setTransfers(initialTransfers)
   }, [initialUser, initialTransfers])
-
-  // Hydrate user session client-side if not loaded during SSR
-  useEffect(() => {
-    if (!currentUser?.email) {
-      fetch('/api/auth/me')
-        .then(res => res.json())
-        .then(data => {
-          if (data?.user) {
-            setCurrentUser(data.user)
-            router.refresh()
-          } else {
-            window.location.href = '/login'
-          }
-        })
-        .catch(() => {
-          window.location.href = '/login'
-        })
-    }
-  }, [currentUser, router])
 
   // Listen for return from Stripe Checkout
   useEffect(() => {
@@ -88,10 +69,9 @@ export default function DashboardClient({
           if (json.success && json.data?.plan && json.data.plan !== 'free') {
             clearInterval(interval)
             setVerifyingPayment(false)
-            setCurrentUser(prev => (prev ? { ...prev, plan: json.data.plan } : null))
+            setCurrentUser(prev => ({ ...prev, plan: json.data.plan }))
             setPaymentNotice(`Payment verified! Your subscription has been upgraded to the ${json.data.plan.toUpperCase()} tier.`)
             window.history.replaceState({}, '', '/dashboard')
-            router.refresh()
             return
           }
         } catch {}
@@ -109,7 +89,7 @@ export default function DashboardClient({
       setPaymentNotice('Stripe Checkout was cancelled. No changes were made.')
       window.history.replaceState({}, '', '/dashboard')
     }
-  }, [router])
+  }, [])
 
   async function copyLink(token: string) {
     await navigator.clipboard.writeText(`${window.location.origin}/f/${token}`)
@@ -119,29 +99,46 @@ export default function DashboardClient({
 
   async function toggleTransfer(id: string, isActive: boolean) {
     setActionLoading(id)
-    await fetch(`/api/transfers/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: isActive ? 'disable' : 'enable' })
-    })
-    setTransfers(prev => prev.map(t => t.id === id ? { ...t, isActive: !isActive } : t))
+    try {
+      await fetch(`/api/transfers/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: isActive ? 'disable' : 'enable' })
+      })
+      setTransfers(prev => prev.map(t => t.id === id ? { ...t, isActive: !isActive } : t))
+    } catch (e) {
+      console.error('Toggle transfer error:', e)
+    }
     setActionLoading(null)
   }
 
   async function deleteTransfer(id: string) {
     if (!confirm('Delete this transfer? All files will be permanently purged.')) return
     setActionLoading(id)
-    await fetch(`/api/transfers/${id}`, { method: 'DELETE' })
-    setTransfers(prev => prev.filter(t => t.id !== id))
+    try {
+      await fetch(`/api/transfers/${id}`, { method: 'DELETE' })
+      setTransfers(prev => prev.filter(t => t.id !== id))
+    } catch (e) {
+      console.error('Delete transfer error:', e)
+    }
     setActionLoading(null)
   }
 
   async function extendTransfer(id: string) {
     setActionLoading(id)
-    await fetch(`/api/transfers/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'extend', days: 7 })
-    })
-    router.refresh()
+    try {
+      const res = await fetch(`/api/transfers/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'extend', days: 7 })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.data?.expiresAt) {
+          setTransfers(prev => prev.map(t => t.id === id ? { ...t, expiresAt: data.data.expiresAt, isActive: true } : t))
+        }
+      }
+    } catch (e) {
+      console.error('Extend transfer error:', e)
+    }
     setActionLoading(null)
   }
 
