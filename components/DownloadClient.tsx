@@ -5,6 +5,7 @@ import { useScrollReveal } from '@/hooks/useScrollReveal'
 import Tilt3D from '@/components/ui/Tilt3D'
 import Background3D from '@/components/Background3D'
 import Logo from '@/components/Logo'
+import AdBanner from '@/components/AdBanner'
 import {
   DownloadCloudIcon,
   ArrowDownTrayIcon,
@@ -524,6 +525,9 @@ export default function DownloadClient({ token }: { token: string }) {
                 )}
 
               </Tilt3D>
+
+              {/* Responsive Ad / Sponsor Banner */}
+              <AdBanner slotId="download_page_banner" format="horizontal" style={{ marginTop: 14 }} />
             </div>
 
           </div>

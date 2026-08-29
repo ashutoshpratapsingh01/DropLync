@@ -7,6 +7,7 @@ import Tilt3D from '@/components/ui/Tilt3D'
 import UpgradeModal from '@/components/ui/UpgradeModal'
 import DemoVideoModal from '@/components/DemoVideoModal'
 import Logo from '@/components/Logo'
+import AdBanner from '@/components/AdBanner'
 import { FREE_LIMIT_BYTES } from '@/lib/plans'
 import {
   UploadCloudIcon,
@@ -1287,7 +1288,73 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+      {/* Social Viral Share Quick Buttons */}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+        <a
+          href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Download files on DropLync: ${result.url}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            padding: '5px 12px',
+            borderRadius: 8,
+            background: 'rgba(37,211,102,0.12)',
+            border: '1px solid rgba(37,211,102,0.25)',
+            color: '#25d366',
+            fontSize: '0.76rem',
+            fontWeight: 800,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+        >
+          <span>💬 WhatsApp</span>
+        </a>
+
+        <a
+          href={`https://t.me/share/url?url=${encodeURIComponent(result.url)}&text=${encodeURIComponent('Download files via DropLync')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            padding: '5px 12px',
+            borderRadius: 8,
+            background: 'rgba(0,136,204,0.12)',
+            border: '1px solid rgba(0,136,204,0.25)',
+            color: '#0088cc',
+            fontSize: '0.76rem',
+            fontWeight: 800,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+        >
+          <span>✈️ Telegram</span>
+        </a>
+
+        <a
+          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Transfer large files up to 10GB for free with @DropLync')}&url=${encodeURIComponent(result.url)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            padding: '5px 12px',
+            borderRadius: 8,
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-1)',
+            fontSize: '0.76rem',
+            fontWeight: 800,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+        >
+          <span>𝕏 Share</span>
+        </a>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 12 }}>
         <a
           href={result.url}
           target="_blank"
@@ -1302,6 +1369,9 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
           + Send Another Transfer
         </button>
       </div>
+
+      {/* Ad & Sponsor Unit on Upload Success */}
+      <AdBanner slotId="upload_success_banner" format="horizontal" style={{ margin: '8px 0 0' }} />
     </div>
   )
 }
