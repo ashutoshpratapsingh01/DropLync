@@ -32,7 +32,7 @@ type Stats = { total: number; active: number; expired: number; totalDownloads: n
 export default function DashboardClient({
   user: initialUser, transfers: initialTransfers, stats
 }: {
-  user: { name?: string | null; email: string; plan?: string }
+  user: { name?: string | null; email: string; plan?: string } | null
   transfers: Transfer[]
   stats: Stats
 }) {
@@ -44,6 +44,31 @@ export default function DashboardClient({
   const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [verifyingPayment, setVerifyingPayment] = useState(false)
   const [paymentNotice, setPaymentNotice] = useState<string | null>(null)
+
+  // Sync state if initialUser or initialTransfers change
+  useEffect(() => {
+    if (initialUser) setCurrentUser(initialUser)
+    if (initialTransfers) setTransfers(initialTransfers)
+  }, [initialUser, initialTransfers])
+
+  // Hydrate user session client-side if not loaded during SSR
+  useEffect(() => {
+    if (!currentUser?.email) {
+      fetch('/api/auth/me')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.user) {
+            setCurrentUser(data.user)
+            router.refresh()
+          } else {
+            window.location.href = '/login'
+          }
+        })
+        .catch(() => {
+          window.location.href = '/login'
+        })
+    }
+  }, [currentUser, router])
 
   // Listen for return from Stripe Checkout
   useEffect(() => {
@@ -63,7 +88,7 @@ export default function DashboardClient({
           if (json.success && json.data?.plan && json.data.plan !== 'free') {
             clearInterval(interval)
             setVerifyingPayment(false)
-            setCurrentUser(prev => ({ ...prev, plan: json.data.plan }))
+            setCurrentUser(prev => (prev ? { ...prev, plan: json.data.plan } : null))
             setPaymentNotice(`Payment verified! Your subscription has been upgraded to the ${json.data.plan.toUpperCase()} tier.`)
             window.history.replaceState({}, '', '/dashboard')
             router.refresh()
@@ -118,6 +143,15 @@ export default function DashboardClient({
     })
     router.refresh()
     setActionLoading(null)
+  }
+
+  if (!currentUser) {
+    return (
+      <div style={{ background: 'var(--bg-soft)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+        <SpinnerIcon size={32} />
+        <span style={{ fontSize: '0.9rem', color: 'var(--text-3)', fontWeight: 600 }}>Loading your dashboard...</span>
+      </div>
+    )
   }
 
   const displayName = currentUser.name || currentUser.email.split('@')[0]
