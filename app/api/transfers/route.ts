@@ -18,31 +18,25 @@ export async function POST(req: NextRequest) {
     const { name, expiryDays = 7, maxDownloads = 0, password } = await req.json()
 
     const transferId = uuidv4()
-    const rawToken = generateSecureToken(16)
+    // Generate clean, short, URL-friendly 11-character token (e.g. k9X7m2A48bQ)
+    const shortToken = generateSecureToken(8)
     const expiresAt = getExpiryDate(Math.min(Math.max(1, Number(expiryDays) || 7), 30))
     const passwordHash = password ? await bcrypt.hash(password, 10) : null
     const parsedMaxDownloads = parseInt(maxDownloads)
 
-    const token = signTransferToken({
+    // Signed JWT used strictly for backend upload authorization headers
+    const uploadToken = signTransferToken({
       transferId,
-      token: rawToken,
+      token: shortToken,
       name: name ? String(name).slice(0, 100) : `Transfer ${new Date().toLocaleDateString()}`,
       expiresAt: expiresAt.toISOString(),
       userId: user?.id ?? null
     })
 
-    const uploadToken = signUploadTicket({
-      transferId,
-      fileId: 'transfer_root',
-      filename: 'root',
-      size: 0,
-      expiresAt: expiresAt.toISOString()
-    })
-
     const transfer = await prisma.transfer.create({
       data: {
         id: transferId,
-        token,
+        token: shortToken,
         uploadToken,
         name: name ? String(name).slice(0, 100) : `Transfer ${new Date().toLocaleDateString()}`,
         userId: user?.id ?? null,
@@ -56,8 +50,8 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({
       transferId: transfer.id,
-      token: transfer.token,
-      uploadToken: transfer.uploadToken,
+      token: transfer.token, // clean short token for public share URL
+      uploadToken: transfer.uploadToken, // signed JWT for chunk uploads
       expiresAt: transfer.expiresAt.toISOString()
     }, 201)
 
