@@ -528,6 +528,33 @@ export default function LandingClient() {
         recipients: recipientsList
       })
 
+      // Cache transfer locally for persistent dashboard tracking across all sessions and serverless containers
+      try {
+        const cachedTransfers = JSON.parse(localStorage.getItem('droplync_user_transfers') || '[]')
+        const newTransferEntry = {
+          id: transferId,
+          token: transferToken,
+          name: transferName || `Transfer ${new Date().toLocaleDateString()}`,
+          expiresAt: expiryDate,
+          isActive: true,
+          downloadCount: 0,
+          maxDownloads: parseInt(maxDownloads) || null,
+          totalSize: String(totalSize || overallTotalBytes),
+          createdAt: new Date().toISOString(),
+          hasPassword: !!password,
+          files: files.filter(f => f.status === 'done').map(f => ({
+            id: f.id,
+            originalName: f.file.name,
+            size: String(f.file.size),
+            mimeType: f.file.type || 'application/octet-stream'
+          }))
+        }
+        const updatedCache = [newTransferEntry, ...cachedTransfers.filter((t: any) => t.id !== transferId)]
+        localStorage.setItem('droplync_user_transfers', JSON.stringify(updatedCache.slice(0, 100)))
+      } catch (storageErr) {
+        console.warn('LocalStorage transfer caching warning:', storageErr)
+      }
+
       if (files.length > successCount) {
         setError(`${files.length - successCount} file(s) failed, but your link is ready with ${successCount} file(s).`)
       }

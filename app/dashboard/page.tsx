@@ -22,7 +22,7 @@ export default async function DashboardPage() {
     const [userTransfers, stats] = await Promise.all([
       prisma.transfer.findMany({
         where: { userId: user.id },
-        include: { files: { select: { id: true, size: true } } },
+        include: { files: { select: { id: true, size: true, originalName: true, mimeType: true } } },
         orderBy: { createdAt: 'desc' }
       }),
       prisma.transfer.aggregate({
