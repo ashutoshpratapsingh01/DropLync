@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { apiError, apiSuccess } from '@/lib/utils'
 import { writeChunkDirect, getStoragePath } from '@/lib/storage'
 
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60
+export const runtime = 'nodejs'
+
 export async function POST(req: NextRequest, { params }: { params: { fileId: string } }) {
   try {
     const file = await prisma.transferFile.findUnique({

@@ -54,11 +54,35 @@ export async function writeChunkDirect(
   await ensureDir(dir)
 
   const offset = chunkIndex * chunkSize
-  const fileHandle = await fs.promises.open(storagePath, 'a+')
-  try {
-    await fileHandle.write(data, 0, data.length, offset)
-  } finally {
-    await fileHandle.close()
+
+  // Ensure destination file exists atomically without truncating
+  if (!fs.existsSync(storagePath)) {
+    try {
+      await fs.promises.writeFile(storagePath, Buffer.alloc(0), { flag: 'wx' })
+    } catch (e: any) {
+      if (e.code !== 'EEXIST') throw e
+    }
+  }
+
+  // Open with 'r+' for true random-access positional byte writes
+  let attempts = 0
+  const maxAttempts = 4
+
+  while (attempts < maxAttempts) {
+    let fileHandle: fs.promises.FileHandle | null = null
+    try {
+      fileHandle = await fs.promises.open(storagePath, 'r+')
+      await fileHandle.write(data, 0, data.length, offset)
+      return
+    } catch (err: any) {
+      attempts++
+      if (attempts >= maxAttempts) throw err
+      await new Promise(r => setTimeout(r, attempts * 50))
+    } finally {
+      if (fileHandle) {
+        await fileHandle.close().catch(() => {})
+      }
+    }
   }
 }
 

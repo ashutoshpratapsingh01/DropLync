@@ -247,7 +247,7 @@ export default function LandingClient() {
     totalChunks: number,
     uploadToken?: string,
     signal?: AbortSignal,
-    retries = 3
+    retries = 4
   ): Promise<void> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       if (signal?.aborted) throw new Error('Upload cancelled')
@@ -267,7 +267,11 @@ export default function LandingClient() {
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}))
-          throw new Error(errData.error || `Chunk ${chunkIndex + 1}/${totalChunks} upload failed`)
+          if (attempt === retries) {
+            throw new Error(errData.error || `Chunk ${chunkIndex + 1}/${totalChunks} upload failed (${res.status} ${res.statusText})`)
+          }
+          await new Promise(resolve => setTimeout(resolve, attempt * 800))
+          continue
         }
         return
       } catch (err: any) {
@@ -275,9 +279,9 @@ export default function LandingClient() {
           throw new Error('Upload cancelled by user')
         }
         if (attempt === retries) {
-          throw new Error(err.message || `Failed uploading chunk ${chunkIndex + 1} after ${retries} attempts`)
+          throw new Error(err.message || `Chunk ${chunkIndex + 1}/${totalChunks} upload failed after ${retries} attempts`)
         }
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000))
+        await new Promise(resolve => setTimeout(resolve, attempt * 800))
       }
     }
   }
