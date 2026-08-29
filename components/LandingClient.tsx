@@ -1205,32 +1205,81 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
   const isEmailDelivery = result.deliveryMode === 'email' && result.recipients?.length > 0
 
   return (
-    <div style={{ textAlign: 'center', padding: '6px 0' }}>
-      <div
-        className="check-pop"
-        style={{
-          width: 54,
-          height: 54,
-          borderRadius: '50%',
-          margin: '0 auto 12px',
-          background: 'linear-gradient(135deg, #2563eb, #0284c7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 8px 22px rgba(37,99,235,0.38)'
-        }}
-      >
-        <CheckCircleIcon size={30} color="white" />
+    <div style={{ textAlign: 'center', padding: '4px 0' }}>
+      {/* 3D Glowing Success Badge */}
+      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+        <div
+          style={{
+            position: 'absolute',
+            width: 70,
+            height: 70,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(37,99,235,0.45) 0%, rgba(6,182,212,0.2) 65%, transparent 100%)',
+            filter: 'blur(12px)',
+            pointerEvents: 'none'
+          }}
+        />
+        <div
+          className="check-pop"
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 16,
+            background: 'linear-gradient(135deg, #2563eb 0%, #0284c7 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(37,99,235,0.38)',
+            position: 'relative',
+            border: '1.5px solid rgba(255,255,255,0.3)'
+          }}
+        >
+          <CheckCircleIcon size={28} color="white" />
+        </div>
       </div>
 
-      <h2 style={{ fontSize: '1.38rem', fontWeight: 900, marginBottom: 3, color: 'var(--text-1)', letterSpacing: '-0.03em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <h2 style={{ fontSize: '1.34rem', fontWeight: 900, marginBottom: 8, color: 'var(--text-1)', letterSpacing: '-0.03em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
         <span>{isEmailDelivery ? 'Transfer Emailed Successfully!' : 'Transfer Link Ready!'}</span>
-        {isEmailDelivery && <MailIcon size={20} color="var(--brand)" />}
+        {isEmailDelivery && <MailIcon size={19} color="var(--brand)" />}
       </h2>
 
-      <p style={{ color: 'var(--text-2)', marginBottom: 14, fontSize: '0.88rem', fontWeight: 600 }}>
-        {result.fileCount} file{result.fileCount !== 1 ? 's' : ''} ({formatBytes(result.totalSize)}) · Active until {new Date(result.expiresAt).toLocaleDateString()}
-      </p>
+      {/* Metadata Pill Chips */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+        <span
+          style={{
+            padding: '3px 10px',
+            borderRadius: 20,
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--border)',
+            fontSize: '0.74rem',
+            fontWeight: 700,
+            color: 'var(--text-1)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4
+          }}
+        >
+          <span>📦</span>
+          <span>{result.fileCount} file{result.fileCount !== 1 ? 's' : ''} ({formatBytes(result.totalSize)})</span>
+        </span>
+        <span
+          style={{
+            padding: '3px 10px',
+            borderRadius: 20,
+            background: 'rgba(5,150,105,0.1)',
+            border: '1px solid rgba(5,150,105,0.25)',
+            fontSize: '0.74rem',
+            fontWeight: 700,
+            color: '#059669',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4
+          }}
+        >
+          <span>⏳</span>
+          <span>Expires {new Date(result.expiresAt).toLocaleDateString()}</span>
+        </span>
+      </div>
 
       {/* Recipient Notification Box if Email Mode */}
       {isEmailDelivery && (
@@ -1245,29 +1294,32 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
         </div>
       )}
 
-      {/* Glass Link Box */}
+      {/* Premium Glass Link Input Box */}
       <div
         style={{
           display: 'flex',
+          alignItems: 'center',
           gap: 8,
           padding: '6px 6px 6px 12px',
           background: 'var(--glass-bg-subtle)',
-          border: '1.5px solid var(--border-glow)',
-          borderRadius: 12,
-          marginBottom: 16,
-          boxShadow: '0 8px 20px rgba(37,99,235,0.12)'
+          border: '1.5px solid rgba(37,99,235,0.3)',
+          borderRadius: 14,
+          marginBottom: 14,
+          boxShadow: '0 4px 18px rgba(37,99,235,0.12)',
+          transition: 'all 200ms ease'
         }}
       >
+        <span style={{ fontSize: '0.85rem', flexShrink: 0, opacity: 0.8 }}>🔗</span>
         <span
           style={{
             flex: 1,
-            fontSize: '0.84rem',
+            fontSize: '0.82rem',
+            fontFamily: 'monospace',
             fontWeight: 700,
             color: 'var(--brand)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            alignSelf: 'center',
             textAlign: 'left'
           }}
         >
@@ -1276,7 +1328,17 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
         <button
           onClick={onCopy}
           className="btn-primary"
-          style={{ padding: '8px 16px', fontSize: '0.82rem', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          style={{
+            padding: '8px 16px',
+            fontSize: '0.82rem',
+            fontWeight: 800,
+            borderRadius: 10,
+            flexShrink: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            boxShadow: '0 4px 12px rgba(37,99,235,0.3)'
+          }}
         >
           {copied ? (
             <>
@@ -1292,73 +1354,85 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
         </button>
       </div>
 
-      {/* Social Viral Share Quick Icon Buttons */}
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 14 }}>
-        <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: 2 }}>
-          Share:
+      {/* Sleek Floating Social Share Dock */}
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 9,
+          padding: '5px 14px',
+          borderRadius: 30,
+          background: 'var(--glass-bg-subtle)',
+          border: '1px solid var(--border)',
+          marginBottom: 14,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}
+      >
+        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 2 }}>
+          Quick Share:
         </span>
 
-        {/* WhatsApp Icon Button */}
+        {/* WhatsApp */}
         <a
           href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Download files on DropLync: ${result.url}`)}`}
           target="_blank"
           rel="noopener noreferrer"
-          title="Share via WhatsApp"
-          aria-label="Share via WhatsApp"
+          title="Share on WhatsApp"
+          aria-label="Share on WhatsApp"
           className="card-hover"
           style={{
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             borderRadius: '50%',
-            background: 'rgba(37,211,102,0.14)',
-            border: '1.5px solid rgba(37,211,102,0.35)',
+            background: 'rgba(37,211,102,0.12)',
+            border: '1.5px solid rgba(37,211,102,0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-            boxShadow: '0 4px 10px rgba(37,211,102,0.18)',
+            boxShadow: '0 2px 8px rgba(37,211,102,0.15)',
             flexShrink: 0
           }}
         >
-          <WhatsAppIcon size={18} color="#25d366" />
+          <WhatsAppIcon size={17} color="#25d366" />
         </a>
 
-        {/* Telegram Icon Button */}
+        {/* Telegram */}
         <a
           href={`https://t.me/share/url?url=${encodeURIComponent(result.url)}&text=${encodeURIComponent('Download files via DropLync')}`}
           target="_blank"
           rel="noopener noreferrer"
-          title="Share via Telegram"
-          aria-label="Share via Telegram"
+          title="Share on Telegram"
+          aria-label="Share on Telegram"
           className="card-hover"
           style={{
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             borderRadius: '50%',
-            background: 'rgba(0,136,204,0.14)',
-            border: '1.5px solid rgba(0,136,204,0.35)',
+            background: 'rgba(0,136,204,0.12)',
+            border: '1.5px solid rgba(0,136,204,0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-            boxShadow: '0 4px 10px rgba(0,136,204,0.18)',
+            boxShadow: '0 2px 8px rgba(0,136,204,0.15)',
             flexShrink: 0
           }}
         >
-          <TelegramIcon size={18} color="#0088cc" />
+          <TelegramIcon size={17} color="#0088cc" />
         </a>
 
-        {/* 𝕏 / Twitter Icon Button */}
+        {/* 𝕏 / Twitter */}
         <a
           href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Transfer large files up to 10GB for free with @DropLync')}&url=${encodeURIComponent(result.url)}`}
           target="_blank"
           rel="noopener noreferrer"
-          title="Share on X (Twitter)"
-          aria-label="Share on X (Twitter)"
+          title="Share on X"
+          aria-label="Share on X"
           className="card-hover"
           style={{
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             borderRadius: '50%',
             background: 'var(--glass-bg)',
             border: '1.5px solid var(--border-mid)',
@@ -1366,14 +1440,14 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             flexShrink: 0
           }}
         >
-          <TwitterXIcon size={16} color="var(--text-1)" />
+          <TwitterXIcon size={15} color="var(--text-1)" />
         </a>
 
-        {/* Native Web Share API Button */}
+        {/* Native Web Share */}
         <button
           type="button"
           onClick={() => {
@@ -1391,42 +1465,60 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
           aria-label="Share via device menu"
           className="card-hover"
           style={{
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             borderRadius: '50%',
-            background: 'rgba(37,99,235,0.14)',
-            border: '1.5px solid rgba(37,99,235,0.35)',
+            background: 'rgba(37,99,235,0.12)',
+            border: '1.5px solid rgba(37,99,235,0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
             transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-            boxShadow: '0 4px 10px rgba(37,99,235,0.18)',
+            boxShadow: '0 2px 8px rgba(37,99,235,0.15)',
             flexShrink: 0
           }}
         >
-          <ShareSheetIcon size={16} color="var(--brand)" />
+          <ShareSheetIcon size={15} color="var(--brand)" />
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 12 }}>
+      {/* Balanced Dual Actions */}
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
         <a
           href={result.url}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-secondary"
-          style={{ fontSize: '0.84rem', padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          style={{
+            fontSize: '0.82rem',
+            fontWeight: 800,
+            padding: '8px 16px',
+            borderRadius: 10,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6
+          }}
         >
           <span>Preview Portal</span>
           <ArrowRightIcon size={13} />
         </a>
-        <button onClick={onReset} className="btn-ghost" style={{ fontSize: '0.84rem' }}>
+        <button
+          onClick={onReset}
+          className="btn-ghost"
+          style={{
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            padding: '8px 14px',
+            borderRadius: 10
+          }}
+        >
           + Send Another Transfer
         </button>
       </div>
 
       {/* Ad & Sponsor Unit on Upload Success */}
-      <AdBanner slotId="upload_success_banner" format="horizontal" style={{ margin: '8px 0 0' }} />
+      <AdBanner slotId="upload_success_banner" format="horizontal" />
     </div>
   )
 }

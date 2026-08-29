@@ -64,61 +64,63 @@ export default function AdBanner({
       className={`card-soft ${className}`}
       style={{
         width: '100%',
-        padding: '12px 18px',
-        borderRadius: 14,
-        background: 'linear-gradient(135deg, rgba(37,99,235,0.06) 0%, rgba(2,132,199,0.03) 100%)',
-        border: '1px solid rgba(37,99,235,0.18)',
+        padding: '12px 14px',
+        borderRadius: 16,
+        background: 'linear-gradient(135deg, rgba(37,99,235,0.07) 0%, rgba(2,132,199,0.03) 100%)',
+        border: '1px solid rgba(37,99,235,0.22)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        flexWrap: 'wrap',
+        flexWrap: 'nowrap',
         gap: 12,
         boxSizing: 'border-box',
-        margin: '14px 0',
+        margin: '14px 0 0',
+        boxShadow: '0 4px 18px rgba(37,99,235,0.08)',
         ...style
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 200, flex: '1 1 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: '1 1 auto' }}>
         <div
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: 9,
+            width: 36,
+            height: 36,
+            borderRadius: 10,
             background: 'linear-gradient(135deg, #2563eb, #0284c7)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
-            fontSize: '1rem',
+            fontSize: '1.05rem',
             fontWeight: 900,
-            boxShadow: '0 4px 10px rgba(37,99,235,0.3)',
+            boxShadow: '0 4px 12px rgba(37,99,235,0.32)',
             flexShrink: 0
           }}
         >
           ⚡
         </div>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-1)' }}>
-              Send Up to 50GB & 200GB Files
+        <div style={{ minWidth: 0, textAlign: 'left' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-1)', whiteSpace: 'nowrap' }}>
+              Send Up to 50GB & 200GB
             </span>
             <span
               style={{
-                fontSize: '0.62rem',
+                fontSize: '0.6rem',
                 fontWeight: 800,
                 textTransform: 'uppercase',
-                padding: '2px 6px',
+                padding: '2px 5px',
                 borderRadius: 4,
                 background: 'rgba(37,99,235,0.15)',
                 color: 'var(--brand)',
-                letterSpacing: '0.04em'
+                letterSpacing: '0.04em',
+                lineHeight: 1
               }}
             >
-              Sponsored
+              Pro
             </span>
           </div>
-          <p style={{ fontSize: '0.74rem', color: 'var(--text-3)', margin: '2px 0 0', lineHeight: 1.3 }}>
-            Upgrade to DropLync Pro for unlimited downloads, custom passwords & 90-day vaults.
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-3)', margin: '2px 0 0', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            Unlimited downloads, custom passwords & 90-day vaults.
           </p>
         </div>
       </div>
@@ -127,19 +129,20 @@ export default function AdBanner({
         href="/pricing"
         className="btn-primary"
         style={{
-          padding: '7px 14px',
-          fontSize: '0.78rem',
+          padding: '7px 13px',
+          fontSize: '0.76rem',
           fontWeight: 800,
           borderRadius: 8,
           textDecoration: 'none',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 5,
-          flexShrink: 0
+          gap: 4,
+          flexShrink: 0,
+          whiteSpace: 'nowrap'
         }}
       >
         <span>Explore Pro ($9)</span>
-        <span style={{ fontSize: '0.85rem' }}>→</span>
+        <span style={{ fontSize: '0.82rem' }}>→</span>
       </a>
     </div>
   )
