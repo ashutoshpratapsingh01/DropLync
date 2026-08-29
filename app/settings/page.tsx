@@ -3,6 +3,9 @@ import Navbar from '@/components/Navbar'
 import SettingsClient from '@/components/SettingsClient'
 import { getSession } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export const metadata = {
   title: 'Account Settings — DropLync',
   description: 'Manage your DropLync profile, security settings, branding, API keys, and subscriptions.'
