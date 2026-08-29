@@ -94,7 +94,7 @@ async function runTests() {
     const testBuffer = crypto.randomBytes(testFileSize);
     const originalSha256 = crypto.createHash('sha256').update(testBuffer).digest('hex');
     const testFilename = `e2e_video_payload_${Date.now()}.mp4`;
-    const CHUNK_SIZE = 5 * 1024 * 1024;
+    const CHUNK_SIZE = 3 * 1024 * 1024;
     const totalChunks = Math.ceil(testFileSize / CHUNK_SIZE);
     console.log(`  ✔ Original File SHA-256: ${originalSha256}`);
     console.log(`  ✔ Total Chunks to Stream: ${totalChunks}`);

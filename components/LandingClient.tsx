@@ -56,7 +56,7 @@ type TransferResult = {
   recipients?: string[]
 }
 
-const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB chunks
+const CHUNK_SIZE = 3 * 1024 * 1024 // 3MB chunks (optimally sized for Vercel/Cloud 4.5MB payload limits)
 
 export default function LandingClient() {
   useScrollReveal()

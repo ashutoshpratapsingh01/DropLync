@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { fileId: str
     const chunk = formData.get('chunk') as File
     const chunkIndex = parseInt(formData.get('chunkIndex') as string)
     const totalChunks = parseInt(formData.get('totalChunks') as string)
-    const chunkSize = parseInt(formData.get('chunkSize') as string) || (5 * 1024 * 1024)
+    const chunkSize = parseInt(formData.get('chunkSize') as string) || (3 * 1024 * 1024)
 
     if (!chunk || isNaN(chunkIndex)) return apiError('Invalid chunk data')
 

@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     return apiSuccess({
       fileId,
       storagePath,
-      chunkSize: 5 * 1024 * 1024 // 5MB standard chunk size
+      chunkSize: 3 * 1024 * 1024 // 3MB chunk size (fits Vercel 4.5MB payload limit)
     }, 201)
   } catch (error: any) {
     console.error('Initiate error:', error)
