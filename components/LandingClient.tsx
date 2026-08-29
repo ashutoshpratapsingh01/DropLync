@@ -89,8 +89,95 @@ export default function LandingClient() {
   
   // Interactive Video Demo modal
   const [demoModalOpen, setDemoModalOpen] = useState(false)
+
+  // Upload Guard & Abort Controller
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [pendingNavigation, setPendingNavigation] = useState<string | (() => void) | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const isUploading = files.some(f => f.status === 'uploading')
+  const isBusy = isUploading || creating
+
+  // 1. Guard against window close, tab close, or refresh
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isBusy) {
+        e.preventDefault()
+        e.returnValue = ''
+        return ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isBusy])
+
+  // 2. Guard against in-app link clicks and navigation tabs
+  useEffect(() => {
+    if (!isBusy) return
+
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('a, button[data-nav]') as HTMLElement | null
+      if (target) {
+        if (target.closest('.cancel-modal-content')) return
+
+        const href = target.getAttribute('href')
+        if (href && href !== '#' && !href.startsWith('javascript:')) {
+          e.preventDefault()
+          e.stopPropagation()
+          setPendingNavigation(href)
+          setCancelModalOpen(true)
+        }
+      }
+    }
+
+    document.addEventListener('click', handleDocumentClick, true)
+    return () => document.removeEventListener('click', handleDocumentClick, true)
+  }, [isBusy])
+
+  // 3. Guard against browser back/forward history navigation
+  useEffect(() => {
+    if (!isBusy) return
+
+    window.history.pushState(null, '', window.location.href)
+    const handlePopState = () => {
+      if (isBusy) {
+        window.history.pushState(null, '', window.location.href)
+        setPendingNavigation(() => window.history.back())
+        setCancelModalOpen(true)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [isBusy])
+
+  // Abort and cancel upload
+  function handleConfirmCancel() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    setCreating(false)
+    setFiles(prev => prev.map(f => ({ ...f, status: 'pending', progress: 0, uploadedBytes: 0 })))
+    setStep('upload')
+    setUploadSpeed('0 MB/s')
+    setEta('')
+    setCancelModalOpen(false)
+
+    if (typeof pendingNavigation === 'string') {
+      window.location.href = pendingNavigation
+    } else if (typeof pendingNavigation === 'function') {
+      pendingNavigation()
+    }
+    setPendingNavigation(null)
+  }
+
+  function handleStay() {
+    setCancelModalOpen(false)
+    setPendingNavigation(null)
+  }
 
   // Fetch current user plan from server (single source of truth)
   const refreshPlan = useCallback(() => {
@@ -159,9 +246,11 @@ export default function LandingClient() {
     chunkIndex: number,
     totalChunks: number,
     uploadToken?: string,
+    signal?: AbortSignal,
     retries = 3
   ): Promise<void> {
     for (let attempt = 1; attempt <= retries; attempt++) {
+      if (signal?.aborted) throw new Error('Upload cancelled')
       try {
         const fd = new FormData()
         fd.append('chunk', chunk)
@@ -172,7 +261,8 @@ export default function LandingClient() {
         const res = await fetch(`/api/uploads/${fileId}/chunk`, {
           method: 'POST',
           headers: uploadToken ? { 'x-transfer-token': uploadToken } : {},
-          body: fd
+          body: fd,
+          signal
         })
 
         if (!res.ok) {
@@ -181,6 +271,9 @@ export default function LandingClient() {
         }
         return
       } catch (err: any) {
+        if (signal?.aborted || err.name === 'AbortError') {
+          throw new Error('Upload cancelled by user')
+        }
         if (attempt === retries) {
           throw new Error(err.message || `Failed uploading chunk ${chunkIndex + 1} after ${retries} attempts`)
         }
@@ -193,6 +286,7 @@ export default function LandingClient() {
     uf: UploadFile,
     transferId: string,
     uploadToken: string,
+    signal: AbortSignal | undefined,
     onProgressUpdate: (bytesJustUploaded: number) => void
   ): Promise<{ fileId: string; size: number }> {
     const totalChunks = Math.ceil(uf.file.size / CHUNK_SIZE) || 1
@@ -209,7 +303,8 @@ export default function LandingClient() {
         mimeType: uf.file.type || 'application/octet-stream',
         size: uf.file.size,
         totalChunks
-      })
+      }),
+      signal
     })
 
     if (!initRes.ok) {
@@ -226,12 +321,13 @@ export default function LandingClient() {
     let bytesUploadedForFile = 0
 
     for (let i = 0; i < totalChunks; i++) {
+      if (signal?.aborted) throw new Error('Upload cancelled by user')
       const start = i * CHUNK_SIZE
       const end = Math.min(start + CHUNK_SIZE, uf.file.size)
       const chunk = uf.file.slice(start, end)
       const currentChunkLength = end - start
 
-      await uploadSingleChunkWithRetry(fileId, chunk, i, totalChunks, uploadToken)
+      await uploadSingleChunkWithRetry(fileId, chunk, i, totalChunks, uploadToken, signal)
 
       bytesUploadedForFile += currentChunkLength
       onProgressUpdate(currentChunkLength)
@@ -248,7 +344,8 @@ export default function LandingClient() {
 
     const completeRes = await fetch(`/api/uploads/${fileId}/complete`, {
       method: 'POST',
-      headers: { 'x-transfer-token': uploadToken }
+      headers: { 'x-transfer-token': uploadToken },
+      signal
     })
 
     if (!completeRes.ok) {
@@ -287,6 +384,8 @@ export default function LandingClient() {
 
     setError('')
     setCreating(true)
+    abortControllerRef.current = new AbortController()
+    const signal = abortControllerRef.current.signal
 
     try {
       const transferRes = await fetch('/api/transfers', {
@@ -297,7 +396,8 @@ export default function LandingClient() {
           expiryDays: parseInt(expiry) || 7,
           maxDownloads: parseInt(maxDownloads) || 0,
           password: password || undefined
-        })
+        }),
+        signal
       })
 
       if (!transferRes.ok) {
@@ -345,14 +445,19 @@ export default function LandingClient() {
       let totalSize = 0
 
       for (const uf of files) {
+        if (signal?.aborted) break
         try {
-          const { size } = await uploadFile(uf, transferId, effectiveUploadToken, handleChunkTelemetry)
+          const { size } = await uploadFile(uf, transferId, effectiveUploadToken, signal, handleChunkTelemetry)
           totalSize += size
           successCount++
           setFiles(prev =>
             prev.map(f => (f.id === uf.id ? { ...f, status: 'done', progress: 100 } : f))
           )
         } catch (err: any) {
+          if (signal?.aborted || err.name === 'AbortError') {
+            console.log('Upload aborted by user')
+            return
+          }
           console.error(`Upload error for ${uf.file.name}:`, err)
           setFiles(prev =>
             prev.map(f =>
@@ -361,6 +466,8 @@ export default function LandingClient() {
           )
         }
       }
+
+      if (signal?.aborted) return
 
       if (successCount === 0) {
         setError('All file uploads failed. Please check network connection and try again.')
@@ -372,7 +479,8 @@ export default function LandingClient() {
       try {
         const finalizeRes = await fetch(`/api/transfers/${transferId}/finalize`, {
           method: 'POST',
-          headers: { 'x-transfer-token': effectiveUploadToken }
+          headers: { 'x-transfer-token': effectiveUploadToken },
+          signal
         })
         if (finalizeRes.ok) {
           finalData = await finalizeRes.json()
@@ -380,7 +488,6 @@ export default function LandingClient() {
       } catch (e) {
         console.warn('Finalize request warning:', e)
       }
-
 
       const transferToken = finalData?.token || token
       const expiryDate = finalData?.expiresAt || expiresAt
@@ -399,7 +506,8 @@ export default function LandingClient() {
               recipientEmails: recipientsList,
               senderEmail,
               message: emailMessage
-            })
+            }),
+            signal
           })
         } catch (mailErr) {
           console.warn('Mail dispatch warning:', mailErr)
@@ -422,6 +530,10 @@ export default function LandingClient() {
 
       setStep('success')
     } catch (err: any) {
+      if (signal?.aborted || err.name === 'AbortError') {
+        console.log('Transfer creation cancelled')
+        return
+      }
       setError(err.message || 'Something went wrong during transfer creation')
     } finally {
       setCreating(false)
@@ -556,6 +668,7 @@ export default function LandingClient() {
                     }}
                     uploadSpeed={uploadSpeed}
                     eta={eta}
+                    onCancelUpload={() => setCancelModalOpen(true)}
                     onNext={() => {
                       if (isOverFreeLimit) {
                         setExceededSizeDisplay(formatBytes(totalSize))
@@ -672,11 +785,141 @@ export default function LandingClient() {
 
       {/* ── 3D Upgrade Modal ── */}
       <UpgradeModal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} currentFileSizeDisplay={exceededSizeDisplay} currentLimitDisplay="10GB" onSuccess={() => { setUpgradeModalOpen(false); refreshPlan(); }} />
+
+      {/* ── Cancel Ongoing Upload Confirmation Modal ── */}
+      <CancelTransferModal isOpen={cancelModalOpen} onStay={handleStay} onConfirmCancel={handleConfirmCancel} />
     </main>
   )
 }
 
 // ── Sub-components ──
+
+function CancelTransferModal({
+  isOpen,
+  onStay,
+  onConfirmCancel
+}: {
+  isOpen: boolean
+  onStay: () => void
+  onConfirmCancel: () => void
+}) {
+  if (!isOpen) return null
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        background: 'rgba(0, 0, 0, 0.72)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        animation: 'fadeIn 200ms ease forwards'
+      }}
+    >
+      <div
+        className="glass-panel cancel-modal-content"
+        style={{
+          width: '100%',
+          maxWidth: 440,
+          padding: '28px 24px',
+          borderRadius: 24,
+          background: 'var(--glass-bg)',
+          border: '1.5px solid rgba(220,38,38,0.35)',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.5), 0 0 35px rgba(220,38,38,0.25)',
+          textAlign: 'center',
+          position: 'relative'
+        }}
+      >
+        {/* Warning Badge */}
+        <div
+          style={{
+            width: 58,
+            height: 58,
+            borderRadius: '50%',
+            margin: '0 auto 16px',
+            background: 'linear-gradient(135deg, rgba(220,38,38,0.18), rgba(245,158,11,0.18))',
+            border: '1.5px solid rgba(220,38,38,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(220,38,38,0.25)'
+          }}
+        >
+          <AlertTriangleIcon size={28} color="#dc2626" />
+        </div>
+
+        <h3
+          style={{
+            fontSize: '1.28rem',
+            fontWeight: 900,
+            color: 'var(--text-1)',
+            letterSpacing: '-0.02em',
+            marginBottom: 8
+          }}
+        >
+          Cancel Ongoing Upload?
+        </h3>
+
+        <p
+          style={{
+            fontSize: '0.88rem',
+            color: 'var(--text-2)',
+            lineHeight: 1.55,
+            marginBottom: 24
+          }}
+        >
+          Your files are currently streaming to the secure server. Leaving or changing tabs now will <strong>abort the transfer</strong> and discard all progress.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <button
+            onClick={onStay}
+            className="btn-primary"
+            style={{
+              padding: '12px 16px',
+              fontSize: '0.86rem',
+              fontWeight: 800,
+              borderRadius: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              boxShadow: '0 4px 14px rgba(37,99,235,0.35)'
+            }}
+          >
+            <span>Stay & Continue</span>
+          </button>
+
+          <button
+            onClick={onConfirmCancel}
+            style={{
+              padding: '12px 16px',
+              fontSize: '0.86rem',
+              fontWeight: 800,
+              borderRadius: 12,
+              background: 'rgba(220,38,38,0.12)',
+              border: '1.5px solid rgba(220,38,38,0.35)',
+              color: '#dc2626',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              transition: 'all 180ms ease'
+            }}
+          >
+            <span>Cancel & Leave</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function HolographicProgress({ progress, status, id }: { progress: number; status: string; id: string }) {
   const size = 42
@@ -773,6 +1016,7 @@ function UploadStep({
   onOpenUpgrade,
   uploadSpeed,
   eta,
+  onCancelUpload,
   onNext
 }: any) {
   const isUploading = files.some((f: UploadFile) => f.status === 'uploading')
@@ -790,8 +1034,26 @@ function UploadStep({
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div>
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-1)', letterSpacing: '-0.02em' }}>
-                  Uploading Files... ({doneCount}/{files.length} ready)
+                <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-1)', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>Uploading Files... ({doneCount}/{files.length} ready)</span>
+                  {onCancelUpload && (
+                    <button
+                      onClick={onCancelUpload}
+                      title="Cancel active upload"
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: 6,
+                        background: 'rgba(220,38,38,0.1)',
+                        border: '1px solid rgba(220,38,38,0.25)',
+                        color: '#dc2626',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', display: 'flex', gap: 10, marginTop: 3 }}>
                   <span>Speed: <strong style={{ color: 'var(--brand)' }}>{uploadSpeed}</strong></span>
