@@ -29,7 +29,11 @@ import {
   AlertTriangleIcon,
   SpinnerIcon,
   BarChartIcon,
-  PlayIcon
+  PlayIcon,
+  WhatsAppIcon,
+  TelegramIcon,
+  TwitterXIcon,
+  ShareSheetIcon
 } from '@/components/ui/Icons'
 
 type UploadFile = {
@@ -1288,70 +1292,121 @@ function SuccessStep({ result, copied, onCopy, onReset }: any) {
         </button>
       </div>
 
-      {/* Social Viral Share Quick Buttons */}
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+      {/* Social Viral Share Quick Icon Buttons */}
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 14 }}>
+        <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: 2 }}>
+          Share:
+        </span>
+
+        {/* WhatsApp Icon Button */}
         <a
           href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Download files on DropLync: ${result.url}`)}`}
           target="_blank"
           rel="noopener noreferrer"
+          title="Share via WhatsApp"
+          aria-label="Share via WhatsApp"
+          className="card-hover"
           style={{
-            padding: '5px 12px',
-            borderRadius: 8,
-            background: 'rgba(37,211,102,0.12)',
-            border: '1px solid rgba(37,211,102,0.25)',
-            color: '#25d366',
-            fontSize: '0.76rem',
-            fontWeight: 800,
-            textDecoration: 'none',
-            display: 'inline-flex',
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            background: 'rgba(37,211,102,0.14)',
+            border: '1.5px solid rgba(37,211,102,0.35)',
+            display: 'flex',
             alignItems: 'center',
-            gap: 5
+            justifyContent: 'center',
+            transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            boxShadow: '0 4px 10px rgba(37,211,102,0.18)',
+            flexShrink: 0
           }}
         >
-          <span>💬 WhatsApp</span>
+          <WhatsAppIcon size={18} color="#25d366" />
         </a>
 
+        {/* Telegram Icon Button */}
         <a
           href={`https://t.me/share/url?url=${encodeURIComponent(result.url)}&text=${encodeURIComponent('Download files via DropLync')}`}
           target="_blank"
           rel="noopener noreferrer"
+          title="Share via Telegram"
+          aria-label="Share via Telegram"
+          className="card-hover"
           style={{
-            padding: '5px 12px',
-            borderRadius: 8,
-            background: 'rgba(0,136,204,0.12)',
-            border: '1px solid rgba(0,136,204,0.25)',
-            color: '#0088cc',
-            fontSize: '0.76rem',
-            fontWeight: 800,
-            textDecoration: 'none',
-            display: 'inline-flex',
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            background: 'rgba(0,136,204,0.14)',
+            border: '1.5px solid rgba(0,136,204,0.35)',
+            display: 'flex',
             alignItems: 'center',
-            gap: 5
+            justifyContent: 'center',
+            transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            boxShadow: '0 4px 10px rgba(0,136,204,0.18)',
+            flexShrink: 0
           }}
         >
-          <span>✈️ Telegram</span>
+          <TelegramIcon size={18} color="#0088cc" />
         </a>
 
+        {/* 𝕏 / Twitter Icon Button */}
         <a
           href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Transfer large files up to 10GB for free with @DropLync')}&url=${encodeURIComponent(result.url)}`}
           target="_blank"
           rel="noopener noreferrer"
+          title="Share on X (Twitter)"
+          aria-label="Share on X (Twitter)"
+          className="card-hover"
           style={{
-            padding: '5px 12px',
-            borderRadius: 8,
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-1)',
-            fontSize: '0.76rem',
-            fontWeight: 800,
-            textDecoration: 'none',
-            display: 'inline-flex',
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            background: 'var(--glass-bg)',
+            border: '1.5px solid var(--border-mid)',
+            display: 'flex',
             alignItems: 'center',
-            gap: 5
+            justifyContent: 'center',
+            transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
+            flexShrink: 0
           }}
         >
-          <span>𝕏 Share</span>
+          <TwitterXIcon size={16} color="var(--text-1)" />
         </a>
+
+        {/* Native Web Share API Button */}
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof navigator !== 'undefined' && navigator.share) {
+              navigator.share({
+                title: 'DropLync File Transfer',
+                text: 'Download files via DropLync (10GB Free)',
+                url: result.url
+              }).catch(() => {})
+            } else {
+              onCopy()
+            }
+          }}
+          title="Share via device menu"
+          aria-label="Share via device menu"
+          className="card-hover"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            background: 'rgba(37,99,235,0.14)',
+            border: '1.5px solid rgba(37,99,235,0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 200ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            boxShadow: '0 4px 10px rgba(37,99,235,0.18)',
+            flexShrink: 0
+          }}
+        >
+          <ShareSheetIcon size={16} color="var(--brand)" />
+        </button>
       </div>
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 12 }}>
