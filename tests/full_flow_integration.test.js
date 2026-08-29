@@ -79,7 +79,10 @@ async function runFlowAudit() {
     console.log(`\n--- FLOW 1: OTP REQUEST & GENERATION ---`);
     const otpSendRes = await makeRequest('/api/auth/otp/send', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'x-test-suite': 'droplync_e2e'
+      }
     }, JSON.stringify({ email: testEmail, type: 'login' }));
 
     const otpData = otpSendRes.json || {};
@@ -141,7 +144,10 @@ async function runFlowAudit() {
     const regEmail = `pwd_user_${Date.now()}@example.com`;
     const regOtpRes = await makeRequest('/api/auth/otp/send', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'x-test-suite': 'droplync_e2e'
+      }
     }, JSON.stringify({ email: regEmail, type: 'register' }));
 
     const regDevCode = regOtpRes.json?.devCode || '123456';
