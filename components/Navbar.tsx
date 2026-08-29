@@ -13,8 +13,7 @@ import {
   LayoutDashboardIcon,
   SettingsIcon,
   LogOutIcon,
-  ShieldLockIcon,
-  UserIcon
+  ShieldLockIcon
 } from '@/components/ui/Icons'
 import Logo from '@/components/Logo'
 
@@ -37,31 +36,19 @@ function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="card-hover"
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: '50%',
-        background: 'var(--glass-bg)',
-        border: '1.5px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        color: 'var(--text-1)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        transition: 'all 200ms ease'
-      }}
+      className="theme-toggle"
       title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label="Toggle theme"
     >
-      {mounted && (
-        dark ? (
-          <MoonIcon size={16} color="#60a5fa" />
-        ) : (
-          <SunIcon size={17} color="#d97706" />
-        )
-      )}
+      <div className="theme-toggle-thumb">
+        {mounted && (
+          dark ? (
+            <MoonIcon size={12} color="#60a5fa" />
+          ) : (
+            <SunIcon size={13} color="#d97706" />
+          )
+        )}
+      </div>
     </button>
   )
 }
@@ -89,24 +76,23 @@ export default function Navbar({ user }: NavbarProps) {
     router.refresh()
   }
 
+  function handleFeaturesClick(e: React.MouseEvent) {
+    if (pathname === '/') {
+      e.preventDefault()
+      const el = document.getElementById('features')
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+    setMobileMenuOpen(false)
+  }
+
   const displayName = user?.name || user?.email?.split('@')[0] || ''
   const userPlan = (user as any)?.plan || 'free'
   const isPro = userPlan === 'pro' || userPlan === 'ultra' || userPlan === 'enterprise'
 
   return (
-    <nav
-      className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        background: scrolled ? 'var(--glass-bg)' : 'rgba(var(--bg-rgb, 15,23,42), 0.75)',
-        borderBottom: '1px solid var(--border)',
-        transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)'
-      }}
-    >
+    <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
       <div className="section-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64, gap: 16 }}>
 
         {/* Brand Logo with 3D Quantum Prism */}
@@ -190,6 +176,7 @@ export default function Navbar({ user }: NavbarProps) {
           {/* Features */}
           <Link
             href="/#features"
+            onClick={handleFeaturesClick}
             title="Speed, encryption & architecture"
             style={{
               display: 'inline-flex',
@@ -235,7 +222,7 @@ export default function Navbar({ user }: NavbarProps) {
         </div>
 
         {/* Right Actions Dock (Desktop) */}
-        <div className="mobile-hide" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="mobile-hide" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <ThemeToggle />
 
           {user ? (
@@ -418,7 +405,7 @@ export default function Navbar({ user }: NavbarProps) {
         </div>
 
         {/* Mobile Hamburger & Controls */}
-        <div className="desktop-hide" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="desktop-hide" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <ThemeToggle />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -511,7 +498,7 @@ export default function Navbar({ user }: NavbarProps) {
 
             <Link
               href="/#features"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={handleFeaturesClick}
               style={{
                 padding: '10px 14px',
                 borderRadius: 12,

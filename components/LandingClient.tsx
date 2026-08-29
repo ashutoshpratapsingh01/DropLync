@@ -111,6 +111,12 @@ export default function LandingClient() {
 
   useEffect(() => {
     refreshPlan()
+    if (typeof window !== 'undefined' && window.location.hash === '#features') {
+      setTimeout(() => {
+        const el = document.getElementById('features')
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    }
   }, [refreshPlan])
 
   const addFiles = useCallback((newFiles: FileList | File[]) => {
