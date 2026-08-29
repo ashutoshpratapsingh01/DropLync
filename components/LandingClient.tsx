@@ -779,43 +779,46 @@ function UploadStep({
   return (
     <div>
       {/* Header */}
-      <div style={{ marginBottom: 14 }}>
+      <div style={{ marginBottom: 16 }}>
         {isUploading ? (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div>
-                <div style={{ fontSize: '1.02rem', fontWeight: 800, color: 'var(--text-1)' }}>
-                  Uploading... ({doneCount}/{files.length} ready)
+                <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-1)', letterSpacing: '-0.02em' }}>
+                  Uploading Files... ({doneCount}/{files.length} ready)
                 </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', display: 'flex', gap: 10, marginTop: 2 }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', display: 'flex', gap: 10, marginTop: 3 }}>
                   <span>Speed: <strong style={{ color: 'var(--brand)' }}>{uploadSpeed}</strong></span>
                   {eta && <span>· {eta}</span>}
                 </div>
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 900 }} className="gradient-text">{overallProgress}%</div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 900 }} className="gradient-text">{overallProgress}%</div>
             </div>
-            <div style={{ height: 8, background: 'rgba(203,213,225,0.4)', borderRadius: 999, overflow: 'hidden', border: '1px solid var(--border)' }}>
+            <div style={{ height: 8, background: 'var(--glass-bg)', borderRadius: 999, overflow: 'hidden', border: '1px solid var(--border)' }}>
               <div style={{
                 height: '100%',
                 borderRadius: 999,
                 background: 'linear-gradient(90deg, #2563eb, #0284c7, #06b6d4)',
                 width: `${overallProgress}%`,
                 transition: 'width 0.3s ease',
-                boxShadow: '0 0 12px rgba(37,99,235,0.5)'
+                boxShadow: '0 0 14px rgba(37,99,235,0.6)'
               }} />
             </div>
           </>
         ) : (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '1.12rem', fontWeight: 900, color: 'var(--text-1)', letterSpacing: '-0.02em' }}>
-                Upload & Share
+              <div style={{ fontSize: '1.18rem', fontWeight: 900, color: 'var(--text-1)', letterSpacing: '-0.03em' }}>
+                Upload & Transfer
               </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-3)', marginTop: 1 }}>
-                {userPlan === 'free' ? 'Free Limit: 10GB' : userPlan === 'pro' ? 'Pro Tier: 50GB Limit' : 'Ultra Tier: 200GB Limit'} · Chunked Direct Stream
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-3)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#059669' }} />
+                <span>{userPlan === 'free' ? '10GB Free Tier' : userPlan === 'pro' ? '50GB Pro Tier' : '200GB Ultra Tier'}</span>
+                <span>·</span>
+                <span>Encrypted Direct Stream</span>
               </div>
             </div>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(37,99,235,0.25)' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(6,182,212,0.12))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(37,99,235,0.25)', boxShadow: '0 2px 10px rgba(37,99,235,0.15)' }}>
               <ShieldLockIcon size={18} color="var(--brand)" />
             </div>
           </div>
@@ -825,18 +828,18 @@ function UploadStep({
       {/* Free limit exceeded banner */}
       {isOverFreeLimit && (
         <div style={{
-          padding: '10px 14px', borderRadius: 12, background: 'rgba(220,38,38,0.1)',
+          padding: '10px 14px', borderRadius: 14, background: 'rgba(220,38,38,0.08)',
           border: '1px solid rgba(220,38,38,0.25)', marginBottom: 14,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10
         }}>
           <div style={{ fontSize: '0.82rem', color: 'var(--text-1)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <AlertTriangleIcon size={16} color="#dc2626" />
-            <span><strong>{formatBytes(totalSize)}</strong> exceeds 10GB Free limit.</span>
+            <span><strong>{formatBytes(totalSize)}</strong> exceeds 10GB limit.</span>
           </div>
           <button
             onClick={onOpenUpgrade}
             className="btn-primary"
-            style={{ padding: '6px 14px', fontSize: '0.78rem', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            style={{ padding: '6px 14px', fontSize: '0.78rem', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, borderRadius: 8 }}
           >
             <span>Upgrade to Pro</span>
             <ArrowRightIcon size={12} />
@@ -848,7 +851,21 @@ function UploadStep({
       {!isUploading && (
         <div
           className={`drop-zone ${dragOver ? 'drag-over' : ''}`}
-          style={{ padding: '24px 18px', marginBottom: 16, textAlign: 'center', minHeight: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            padding: '24px 18px',
+            marginBottom: 14,
+            textAlign: 'center',
+            minHeight: 160,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 18,
+            border: '2px dashed rgba(37,99,235,0.3)',
+            background: dragOver ? 'rgba(37,99,235,0.08)' : 'var(--glass-bg-subtle)',
+            transition: 'all 200ms ease',
+            cursor: 'pointer'
+          }}
           onDragOver={e => { e.preventDefault(); setDragOver(true) }}
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
@@ -862,24 +879,24 @@ function UploadStep({
             onChange={e => e.target.files && addFiles(e.target.files)}
           />
           <div style={{
-            width: 58,
-            height: 58,
+            width: 56,
+            height: 56,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, rgba(37,99,235,0.14), rgba(6,182,212,0.14))',
-            border: '1.5px solid rgba(37,99,235,0.28)',
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(6,182,212,0.15))',
+            border: '1.5px solid rgba(37,99,235,0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: 10,
-            boxShadow: '0 6px 16px rgba(37,99,235,0.18)'
+            boxShadow: '0 6px 18px rgba(37,99,235,0.2)'
           }}>
-            <UploadCloudIcon size={28} color="var(--brand)" />
+            <UploadCloudIcon size={26} color="var(--brand)" />
           </div>
-          <p style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--text-1)', marginBottom: 4 }}>
+          <p style={{ fontSize: '0.96rem', fontWeight: 800, color: 'var(--text-1)', marginBottom: 4 }}>
             Drag & drop files here or <span style={{ color: 'var(--brand)', textDecoration: 'underline' }}>browse</span>
           </p>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-3)', fontWeight: 600 }}>
-            Up to 10GB Free · Any file format
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-3)', fontWeight: 600 }}>
+            Up to 10GB Free · Any format · Zero sign-up required
           </span>
         </div>
       )}
@@ -922,7 +939,7 @@ function UploadStep({
                   >
                     {uf.file.name}
                   </div>
-                  <div style={{ fontSize: '0.76rem', color: 'var(--text-3)', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', overflow: 'hidden' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-3)', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', overflow: 'hidden' }}>
                     <span style={{ whiteSpace: 'nowrap' }}>{formatBytes(uf.file.size)}</span>
                     {uf.status === 'uploading' && <span style={{ color: 'var(--brand)', fontWeight: 800, whiteSpace: 'nowrap' }}>• Uploading {uf.progress}%</span>}
                     {uf.status === 'done'      && <span style={{ color: '#059669', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>• <CheckIcon size={12} color="#059669" /> Ready</span>}
@@ -942,7 +959,7 @@ function UploadStep({
             ))}
           </div>
 
-          <div style={{ padding: '10px 12px', background: 'var(--glass-bg)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ padding: '10px 14px', background: 'var(--glass-bg)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%', boxSizing: 'border-box' }}>
             <span style={{ fontSize: '0.82rem', color: isOverFreeLimit ? '#dc2626' : 'var(--text-2)', fontWeight: 700, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {files.length} file{files.length !== 1 ? 's' : ''} · {formatBytes(totalSize)}
               {isOverFreeLimit && ' (Limit 10GB)'}
@@ -951,9 +968,9 @@ function UploadStep({
               <button
                 onClick={onNext}
                 className="btn-primary"
-                style={{ padding: '7px 16px', fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto' }}
+                style={{ padding: '8px 18px', fontSize: '0.84rem', fontWeight: 800, borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 'auto', boxShadow: '0 4px 14px rgba(37,99,235,0.3)' }}
               >
-                <span>{isOverFreeLimit ? 'Upgrade to Send' : 'Next: Settings'}</span>
+                <span>{isOverFreeLimit ? 'Upgrade to Send' : 'Next: Options'}</span>
                 <ArrowRightIcon size={14} />
               </button>
             )}
@@ -995,7 +1012,7 @@ function SettingsStep({
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <button
           onClick={onBack}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-2)', fontSize: '0.88rem', fontWeight: 700, padding: '2px 0', display: 'flex', alignItems: 'center', gap: 4 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-2)', fontSize: '0.86rem', fontWeight: 800, padding: '2px 0', display: 'flex', alignItems: 'center', gap: 4 }}
         >
           <ArrowLeftIcon size={14} />
           <span>Back</span>
@@ -1003,14 +1020,14 @@ function SettingsStep({
         <span style={{ color: 'var(--border-mid)' }}>|</span>
         <div>
           <span style={{ fontWeight: 900, fontSize: '0.98rem', color: 'var(--text-1)' }}>Transfer Options</span>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginLeft: 8 }}>
+          <span style={{ fontSize: '0.76rem', color: 'var(--text-3)', marginLeft: 8, fontWeight: 600 }}>
             {files.length} file{files.length !== 1 ? 's' : ''} ({formatBytes(totalSize)})
           </span>
         </div>
       </div>
 
       {/* Delivery Mode Tabs */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: 4, background: 'var(--glass-bg-subtle)', borderRadius: 14, border: '1px solid var(--border)', marginBottom: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 4, background: 'var(--glass-bg-subtle)', borderRadius: 14, border: '1px solid var(--border)', marginBottom: 14 }}>
         <button
           type="button"
           onClick={() => setDeliveryMode('link')}
@@ -1032,7 +1049,7 @@ function SettingsStep({
           }}
         >
           <LinkIcon size={15} />
-          <span>Get Transfer Link</span>
+          <span>Get Link</span>
         </button>
         <button
           type="button"
@@ -1055,7 +1072,7 @@ function SettingsStep({
           }}
         >
           <MailIcon size={15} />
-          <span>Send via Email</span>
+          <span>Send Email</span>
         </button>
       </div>
 
@@ -1064,10 +1081,10 @@ function SettingsStep({
         {deliveryMode === 'email' && (
           <>
             <div>
-              <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Recipient email address(es)</label>
+              <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem', fontWeight: 700 }}>Recipient email address(es)</label>
               <input
                 className="input"
-                style={{ padding: '9px 12px', fontSize: '0.86rem' }}
+                style={{ padding: '9px 12px', fontSize: '0.86rem', borderRadius: 10 }}
                 placeholder="colleague@gmail.com, client@company.com"
                 value={recipientEmails}
                 onChange={e => setRecipientEmails(e.target.value)}
@@ -1079,11 +1096,11 @@ function SettingsStep({
             </div>
 
             <div>
-              <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Your email address</label>
+              <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem', fontWeight: 700 }}>Your email address</label>
               <input
                 className="input"
                 type="email"
-                style={{ padding: '9px 12px', fontSize: '0.86rem' }}
+                style={{ padding: '9px 12px', fontSize: '0.86rem', borderRadius: 10 }}
                 placeholder="yourname@gmail.com"
                 value={senderEmail}
                 onChange={e => setSenderEmail(e.target.value)}
@@ -1092,10 +1109,10 @@ function SettingsStep({
             </div>
 
             <div>
-              <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Message (Optional)</label>
+              <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem', fontWeight: 700 }}>Message (Optional)</label>
               <input
                 className="input"
-                style={{ padding: '9px 12px', fontSize: '0.86rem' }}
+                style={{ padding: '9px 12px', fontSize: '0.86rem', borderRadius: 10 }}
                 placeholder="Add a note for the recipients..."
                 value={emailMessage}
                 onChange={e => setEmailMessage(e.target.value)}
@@ -1105,10 +1122,10 @@ function SettingsStep({
         )}
 
         <div>
-          <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Transfer title (Optional)</label>
+          <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem', fontWeight: 700 }}>Transfer title (Optional)</label>
           <input
             className="input"
-            style={{ padding: '9px 12px', fontSize: '0.86rem' }}
+            style={{ padding: '9px 12px', fontSize: '0.86rem', borderRadius: 10 }}
             placeholder="e.g. Q3 Design Deliverables"
             value={transferName}
             onChange={e => setTransferName(e.target.value)}
@@ -1117,8 +1134,8 @@ function SettingsStep({
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
-            <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Expires after</label>
-            <select className="select" style={{ padding: '9px 30px 9px 12px', fontSize: '0.84rem' }} value={expiry} onChange={e => setExpiry(e.target.value)}>
+            <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem', fontWeight: 700 }}>Expires after</label>
+            <select className="select" style={{ padding: '9px 30px 9px 12px', fontSize: '0.84rem', borderRadius: 10 }} value={expiry} onChange={e => setExpiry(e.target.value)}>
               <option value="1">1 day</option>
               <option value="3">3 days</option>
               <option value="7">7 days (Free Standard)</option>
@@ -1127,8 +1144,8 @@ function SettingsStep({
             </select>
           </div>
           <div>
-            <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Download limit</label>
-            <select className="select" style={{ padding: '9px 30px 9px 12px', fontSize: '0.84rem' }} value={maxDownloads} onChange={e => setMaxDownloads(e.target.value)}>
+            <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem', fontWeight: 700 }}>Download limit</label>
+            <select className="select" style={{ padding: '9px 30px 9px 12px', fontSize: '0.84rem', borderRadius: 10 }} value={maxDownloads} onChange={e => setMaxDownloads(e.target.value)}>
               <option value="0">Unlimited downloads</option>
               <option value="1">1 download only</option>
               <option value="5">5 downloads</option>
@@ -1140,11 +1157,11 @@ function SettingsStep({
         </div>
 
         <div>
-          <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem' }}>Password protection (Optional)</label>
+          <label className="label" style={{ marginBottom: 3, fontSize: '0.78rem', fontWeight: 700 }}>Password protection (Optional)</label>
           <input
             className="input"
             type="password"
-            style={{ padding: '9px 12px', fontSize: '0.86rem', marginBottom: password ? 6 : 0 }}
+            style={{ padding: '9px 12px', fontSize: '0.86rem', marginBottom: password ? 6 : 0, borderRadius: 10 }}
             placeholder="Set an encryption password"
             value={password}
             onChange={e => setPassword(e.target.value)}
@@ -1153,7 +1170,7 @@ function SettingsStep({
             <input
               className="input"
               type="password"
-              style={{ padding: '9px 12px', fontSize: '0.86rem' }}
+              style={{ padding: '9px 12px', fontSize: '0.86rem', borderRadius: 10 }}
               placeholder="Confirm password"
               value={passwordConfirm}
               onChange={e => setPasswordConfirm(e.target.value)}
@@ -1163,7 +1180,7 @@ function SettingsStep({
       </div>
 
       {error && (
-        <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.3)', color: '#dc2626', fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.3)', color: '#dc2626', fontSize: '0.82rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
           <AlertTriangleIcon size={14} color="#dc2626" />
           <span>{error}</span>
         </div>
@@ -1173,7 +1190,7 @@ function SettingsStep({
         onClick={onCreate}
         disabled={creating}
         className="btn-primary"
-        style={{ width: '100%', marginTop: 14, padding: '11px', fontSize: '0.92rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+        style={{ width: '100%', marginTop: 14, padding: '12px', fontSize: '0.92rem', fontWeight: 800, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, boxShadow: '0 6px 20px rgba(37,99,235,0.35)' }}
       >
         {creating ? (
           <>

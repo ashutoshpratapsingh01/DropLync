@@ -265,36 +265,67 @@ export default function DownloadClient({ token }: { token: string }) {
             <div className="reveal reveal-delay-2" style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
               <Tilt3D intensity={6} glare={true} className="glass-panel" style={{ padding: '20px 16px', borderRadius: 24, width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
                 
-                {/* Header */}
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                {/* Header with Title & Chips */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '1.08rem', fontWeight: 900, color: 'var(--text-1)', letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-1)', letterSpacing: '-0.03em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {info.name || 'Shared Transfer'}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginTop: 1 }}>
-                        {formatBytes(parseInt(info.totalSize || '0'))} · Expires in {timeUntilExpiry(info.expiresAt)}
-                      </div>
                     </div>
-                    <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(5,150,105,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(5,150,105,0.25)', flexShrink: 0 }}>
-                      <DownloadCloudIcon size={17} color="#059669" />
+                    <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg, rgba(5,150,105,0.15), rgba(6,182,212,0.15))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(5,150,105,0.3)', boxShadow: '0 2px 10px rgba(5,150,105,0.15)', flexShrink: 0 }}>
+                      <DownloadCloudIcon size={19} color="#059669" />
                     </div>
+                  </div>
+
+                  {/* Metadata Pill Chips */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{
+                      padding: '3px 10px',
+                      borderRadius: 20,
+                      background: 'var(--glass-bg)',
+                      border: '1px solid var(--border)',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: 'var(--text-1)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}>
+                      <span>📦</span>
+                      <span>{totalFiles} file{totalFiles !== 1 ? 's' : ''} ({formatBytes(totalBytes || parseInt(info.totalSize || '0'))})</span>
+                    </span>
+                    <span style={{
+                      padding: '3px 10px',
+                      borderRadius: 20,
+                      background: 'rgba(5,150,105,0.1)',
+                      border: '1px solid rgba(5,150,105,0.25)',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: '#059669',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}>
+                      <span>⏳</span>
+                      <span>Expires in {timeUntilExpiry(info.expiresAt)}</span>
+                    </span>
                   </div>
                 </div>
 
                 {/* Password Decryption Gate */}
                 {showPasswordGate && (
-                  <div style={{ padding: '20px 16px', textAlign: 'center', background: 'var(--glass-bg-subtle)', borderRadius: 14, border: '1px solid var(--border)' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, margin: '0 auto 8px', background: 'rgba(37,99,235,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(37,99,235,0.25)' }}>
-                      <ShieldLockIcon size={18} color="var(--brand)" />
+                  <div style={{ padding: '24px 16px', textAlign: 'center', background: 'var(--glass-bg-subtle)', borderRadius: 18, border: '1.5px solid rgba(37,99,235,0.25)', boxShadow: '0 4px 18px rgba(0,0,0,0.04)' }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 14, margin: '0 auto 10px', background: 'linear-gradient(135deg, rgba(37,99,235,0.15), rgba(6,182,212,0.15))', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(37,99,235,0.3)', boxShadow: '0 4px 12px rgba(37,99,235,0.2)' }}>
+                      <ShieldLockIcon size={20} color="var(--brand)" />
                     </div>
-                    <h2 style={{ fontSize: '1rem', fontWeight: 900, marginBottom: 2, color: 'var(--text-1)' }}>
-                      Enter Decryption Password
+                    <h2 style={{ fontSize: '1.08rem', fontWeight: 900, marginBottom: 4, color: 'var(--text-1)', letterSpacing: '-0.02em' }}>
+                      Encrypted Transfer
                     </h2>
-                    <p style={{ color: 'var(--text-3)', marginBottom: 12, fontSize: '0.78rem' }}>
-                      This transfer is secured with password encryption.
+                    <p style={{ color: 'var(--text-3)', marginBottom: 14, fontSize: '0.8rem' }}>
+                      Enter the decryption password provided by the sender.
                     </p>
-                    <div style={{ maxWidth: 280, margin: '0 auto' }}>
+                    <div style={{ maxWidth: 290, margin: '0 auto' }}>
                       <input
                         type="password"
                         className="input"
@@ -302,10 +333,10 @@ export default function DownloadClient({ token }: { token: string }) {
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && verifyPassword()}
-                        style={{ marginBottom: 8, textAlign: 'center', padding: '8px 12px', fontSize: '0.84rem' }}
+                        style={{ marginBottom: 10, textAlign: 'center', padding: '10px 14px', fontSize: '0.88rem', borderRadius: 12 }}
                       />
                       {pwError && (
-                        <div style={{ color: '#dc2626', fontSize: '0.76rem', marginBottom: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                        <div style={{ color: '#dc2626', fontSize: '0.78rem', marginBottom: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
                           <AlertTriangleIcon size={14} color="#dc2626" />
                           <span>{pwError}</span>
                         </div>
@@ -314,7 +345,7 @@ export default function DownloadClient({ token }: { token: string }) {
                         onClick={verifyPassword}
                         disabled={verifying || !password}
                         className="btn-primary"
-                        style={{ width: '100%', padding: '8px', fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                        style={{ width: '100%', padding: '10px', fontSize: '0.88rem', fontWeight: 800, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}
                       >
                         {verifying ? (
                           <>
@@ -323,7 +354,7 @@ export default function DownloadClient({ token }: { token: string }) {
                           </>
                         ) : (
                           <>
-                            <span>Unlock Files</span>
+                            <span>Unlock & Access Files</span>
                             <ArrowRightIcon size={14} />
                           </>
                         )}
@@ -335,97 +366,38 @@ export default function DownloadClient({ token }: { token: string }) {
                 {/* Unlocked Files List & Interactive Action Controls */}
                 {!showPasswordGate && (
                   <div>
-                    {/* Post-Download Interactive Action Suite */}
-                    {hasStartedDownload ? (
-                      <div style={{
-                        padding: '12px 14px',
-                        borderRadius: 14,
-                        background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(6,182,212,0.12))',
-                        border: '1.5px solid rgba(37,99,235,0.3)',
-                        marginBottom: 10,
-                        boxShadow: '0 4px 14px rgba(37,99,235,0.15)',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 2 }}>
-                          <CheckCircleIcon size={16} color="#059669" />
-                          <span style={{ fontWeight: 900, fontSize: '0.88rem', color: 'var(--text-1)' }}>
-                            Download in progress!
-                          </span>
-                        </div>
-                        <p style={{ color: 'var(--text-2)', fontSize: '0.74rem', marginBottom: 10 }}>
-                          Enjoy high line-speed delivery. Want to send your own files?
-                        </p>
-
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}>
-                          <a
-                            href="/"
-                            className="btn-primary"
-                            style={{ padding: '7px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 5, flex: '1 1 auto', justifyContent: 'center' }}
-                          >
-                            <ArrowUpTrayIcon size={13} />
-                            <span>Send Files (10GB Free)</span>
-                            <ArrowRightIcon size={12} />
-                          </a>
-                          <button
-                            onClick={copyShareLink}
-                            className="btn-secondary"
-                            style={{ padding: '7px 12px', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 5, flex: '1 1 auto', justifyContent: 'center' }}
-                          >
-                            {copiedLink ? (
-                              <>
-                                <CheckIcon size={13} color="#059669" />
-                                <span>Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <LinkIcon size={13} />
-                                <span>Copy Link</span>
-                              </>
-                            )}
-                          </button>
-                          <button
-                            onClick={downloadAll}
-                            disabled={!!downloading}
-                            className="btn-ghost"
-                            style={{ fontSize: '0.76rem', padding: '7px 8px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                          >
-                            <SpinnerIcon size={12} className={downloading === 'all' ? 'spin' : ''} />
-                            <span>Again</span>
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Primary Download All Bar */
-                      <div style={{ marginBottom: 10, textAlign: 'center' }}>
-                        <button
-                          onClick={downloadAll}
-                          disabled={!!downloading}
-                          className="btn-primary"
-                          style={{
-                            width: '100%',
-                            padding: '12px 20px',
-                            fontSize: '0.94rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 8,
-                            boxShadow: '0 6px 18px rgba(37,99,235,0.28)'
-                          }}
-                        >
-                          {downloading === 'all' ? (
-                            <>
-                              <SpinnerIcon size={17} color="white" />
-                              <span>Preparing Stream Archive...</span>
-                            </>
-                          ) : (
-                            <>
-                              <DownloadCloudIcon size={17} color="white" />
-                              <span>Download All Files ({totalFiles}) · {formatBytes(totalBytes || parseInt(info.totalSize || '0'))}</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
+                    {/* Primary Download All Bar */}
+                    <div style={{ marginBottom: 12, textAlign: 'center' }}>
+                      <button
+                        onClick={downloadAll}
+                        disabled={!!downloading}
+                        className="btn-primary"
+                        style={{
+                          width: '100%',
+                          padding: '13px 20px',
+                          fontSize: '0.94rem',
+                          fontWeight: 800,
+                          borderRadius: 14,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          boxShadow: '0 6px 20px rgba(37,99,235,0.35)'
+                        }}
+                      >
+                        {downloading === 'all' ? (
+                          <>
+                            <SpinnerIcon size={18} color="white" />
+                            <span>Preparing Stream Archive...</span>
+                          </>
+                        ) : (
+                          <>
+                            <DownloadCloudIcon size={18} color="white" />
+                            <span>Download All Files ({totalFiles}) · {formatBytes(totalBytes || parseInt(info.totalSize || '0'))}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
 
                     {/* Compact File list items */}
                     <div style={{ border: '1px solid var(--border-glass)', borderRadius: 12, overflow: 'hidden', background: 'var(--glass-bg-subtle)', width: '100%', boxSizing: 'border-box' }}>
