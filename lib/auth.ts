@@ -38,13 +38,30 @@ export async function getSession() {
   if (!token) return null
 
   const payload = verifyToken(token)
-  if (!payload) return null
+  if (!payload || !payload.userId) return null
 
-  const session = await prisma.session.findFirst({
-    where: { token, expiresAt: { gt: new Date() } },
-    include: { user: true }
-  })
-  return session?.user ?? null
+  try {
+    // 1. Try finding active session in database
+    const session = await prisma.session.findFirst({
+      where: { token, expiresAt: { gt: new Date() } },
+      include: { user: true }
+    })
+    if (session?.user && session.user.isActive) {
+      return session.user
+    }
+
+    // 2. Fallback: Lookup user directly from valid cryptographically verified JWT payload
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId }
+    })
+    if (user && user.isActive) {
+      return user
+    }
+  } catch (err) {
+    console.error('getSession db error:', err)
+  }
+
+  return null
 }
 
 /**

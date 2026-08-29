@@ -31,18 +31,6 @@ export default function RegisterPage() {
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([])
 
-  // Check if user is already logged in
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.user) {
-          window.location.href = '/dashboard'
-        }
-      })
-      .catch(() => {})
-  }, [])
-
   useEffect(() => {
     let timer: any
     if (step === 'otp' && countdown > 0) {
@@ -62,6 +50,7 @@ export default function RegisterPage() {
   // Handle Send Register OTP
   async function handleSendRegisterOtp(e?: React.FormEvent) {
     if (e) e.preventDefault()
+    if (loading) return
     setError('')
     setSuccessMsg('')
     const cleanEmail = email.toLowerCase().trim()
@@ -98,6 +87,7 @@ export default function RegisterPage() {
 
   // Handle Verify Register OTP & Create Account
   async function handleVerifyRegisterOtp(codeToVerify?: string) {
+    if (loading) return
     setError('')
     const cleanEmail = email.toLowerCase().trim()
     const code = (codeToVerify || otpDigits.join('')).trim()

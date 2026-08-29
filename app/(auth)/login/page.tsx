@@ -32,18 +32,6 @@ export default function LoginPage() {
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([])
 
-  // Check if user is already logged in
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        if (data?.user) {
-          window.location.href = '/dashboard'
-        }
-      })
-      .catch(() => {})
-  }, [])
-
   // Countdown timer for OTP resend
   useEffect(() => {
     let timer: any
@@ -65,6 +53,7 @@ export default function LoginPage() {
   // Handle Send OTP
   async function handleSendOtp(e?: React.FormEvent) {
     if (e) e.preventDefault()
+    if (loading) return
     setError('')
     setSuccessMsg('')
     const cleanEmail = email.toLowerCase().trim()
@@ -101,6 +90,7 @@ export default function LoginPage() {
 
   // Handle Verify OTP
   async function handleVerifyOtp(codeToVerify?: string) {
+    if (loading) return
     setError('')
     const cleanEmail = email.toLowerCase().trim()
     const code = (codeToVerify || otpDigits.join('')).trim()
