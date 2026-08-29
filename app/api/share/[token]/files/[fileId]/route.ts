@@ -35,6 +35,16 @@ export async function GET(
     if (!transfer || !file || !filePath || !fs.existsSync(filePath)) {
       const verified = verifyTransferToken(params.token)
       if (verified) {
+        transfer = {
+          id: verified.transferId,
+          token: params.token,
+          isActive: true,
+          expiresAt: new Date(verified.expiresAt),
+          maxDownloads: null,
+          downloadCount: 0,
+          passwordHash: null
+        } as any
+
         const transferDir = path.join(UPLOAD_DIR, 'files', verified.transferId)
         if (fs.existsSync(transferDir)) {
           const filesInDir = await fs.promises.readdir(transferDir)
@@ -46,15 +56,6 @@ export async function GET(
               originalName: targetFilename,
               mimeType: 'application/octet-stream',
               storagePath: filePath
-            } as any
-            transfer = {
-              id: verified.transferId,
-              token: params.token,
-              isActive: true,
-              expiresAt: new Date(verified.expiresAt),
-              maxDownloads: null,
-              downloadCount: 0,
-              passwordHash: null
             } as any
           }
         }
