@@ -119,10 +119,10 @@ export default function PricingClient({ user }: { user?: any }) {
   ]
 
   return (
-    <main style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden', padding: '36px 0 64px' }}>
+    <main style={{ minHeight: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
       <Background3D />
 
-      <div className="section-container">
+      <div className="section-container" style={{ flex: '1 0 auto', width: '100%', paddingTop: 36, paddingBottom: 48 }}>
         
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
@@ -296,7 +296,7 @@ export default function PricingClient({ user }: { user?: any }) {
       </div>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid var(--border)', padding: '16px 0', marginTop: 48, background: 'var(--glass-bg-subtle)', backdropFilter: 'blur(16px)' }}>
+      <footer style={{ borderTop: '1px solid var(--border)', padding: '16px 0', marginTop: 'auto', background: 'var(--glass-bg-subtle)', backdropFilter: 'blur(16px)' }}>
         <div className="section-container">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
             <Logo height={24} />

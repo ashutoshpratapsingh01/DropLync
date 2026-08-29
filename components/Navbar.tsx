@@ -60,14 +60,28 @@ interface NavbarProps {
 export default function Navbar({ user }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState<'transfer' | 'features'>('transfer')
   const pathname = usePathname()
   const router = useRouter()
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 15)
+    const onScroll = () => {
+      setScrolled(window.scrollY > 15)
+      if (pathname === '/') {
+        const featuresEl = document.getElementById('features')
+        if (featuresEl) {
+          const rect = featuresEl.getBoundingClientRect()
+          if (rect.top <= 200) {
+            setActiveSection('features')
+          } else {
+            setActiveSection('transfer')
+          }
+        }
+      }
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [pathname])
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -82,7 +96,17 @@ export default function Navbar({ user }: NavbarProps) {
       const el = document.getElementById('features')
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' })
+        setActiveSection('features')
       }
+    }
+    setMobileMenuOpen(false)
+  }
+
+  function handleTransferClick(e: React.MouseEvent) {
+    if (pathname === '/') {
+      e.preventDefault()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setActiveSection('transfer')
     }
     setMobileMenuOpen(false)
   }
@@ -90,6 +114,11 @@ export default function Navbar({ user }: NavbarProps) {
   const displayName = user?.name || user?.email?.split('@')[0] || ''
   const userPlan = (user as any)?.plan || 'free'
   const isPro = userPlan === 'pro' || userPlan === 'ultra' || userPlan === 'enterprise'
+
+  const isTransferActive = pathname === '/' && activeSection === 'transfer'
+  const isFeaturesActive = pathname === '/' && activeSection === 'features'
+  const isPricingActive = pathname === '/pricing'
+  const isDashboardActive = pathname === '/dashboard'
 
   return (
     <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
@@ -117,6 +146,7 @@ export default function Navbar({ user }: NavbarProps) {
           {/* Transfer (Home) */}
           <Link
             href="/"
+            onClick={handleTransferClick}
             title="Send files (10GB Free)"
             style={{
               display: 'inline-flex',
@@ -128,12 +158,13 @@ export default function Navbar({ user }: NavbarProps) {
               fontWeight: 800,
               textDecoration: 'none',
               transition: 'all 180ms ease',
-              background: pathname === '/' ? 'rgba(37,99,235,0.12)' : 'transparent',
-              color: pathname === '/' ? 'var(--brand)' : 'var(--text-2)',
-              border: pathname === '/' ? '1px solid rgba(37,99,235,0.25)' : '1px solid transparent'
+              background: isTransferActive ? 'rgba(37,99,235,0.14)' : 'transparent',
+              color: isTransferActive ? 'var(--brand)' : 'var(--text-2)',
+              border: isTransferActive ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent',
+              boxShadow: isTransferActive ? '0 2px 10px rgba(37,99,235,0.15)' : 'none'
             }}
           >
-            <UploadCloudIcon size={16} color={pathname === '/' ? 'var(--brand)' : 'currentColor'} />
+            <UploadCloudIcon size={16} color={isTransferActive ? 'var(--brand)' : 'currentColor'} />
             <span>Transfer</span>
           </Link>
 
@@ -151,12 +182,13 @@ export default function Navbar({ user }: NavbarProps) {
               fontWeight: 800,
               textDecoration: 'none',
               transition: 'all 180ms ease',
-              background: pathname === '/pricing' ? 'rgba(37,99,235,0.12)' : 'transparent',
-              color: pathname === '/pricing' ? 'var(--brand)' : 'var(--text-2)',
-              border: pathname === '/pricing' ? '1px solid rgba(37,99,235,0.25)' : '1px solid transparent'
+              background: isPricingActive ? 'rgba(37,99,235,0.14)' : 'transparent',
+              color: isPricingActive ? 'var(--brand)' : 'var(--text-2)',
+              border: isPricingActive ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent',
+              boxShadow: isPricingActive ? '0 2px 10px rgba(37,99,235,0.15)' : 'none'
             }}
           >
-            <DiamondIcon size={15} color={pathname === '/pricing' ? 'var(--brand)' : 'currentColor'} />
+            <DiamondIcon size={15} color={isPricingActive ? 'var(--brand)' : 'currentColor'} />
             <span>Pricing</span>
             <span
               style={{
@@ -164,9 +196,10 @@ export default function Navbar({ user }: NavbarProps) {
                 fontWeight: 900,
                 padding: '2px 6px',
                 borderRadius: 999,
-                background: 'rgba(37,99,235,0.15)',
-                color: 'var(--brand)',
-                letterSpacing: '0.03em'
+                background: isPricingActive ? 'var(--brand)' : 'rgba(37,99,235,0.15)',
+                color: isPricingActive ? '#ffffff' : 'var(--brand)',
+                letterSpacing: '0.03em',
+                transition: 'all 180ms ease'
               }}
             >
               10GB FREE
@@ -188,10 +221,13 @@ export default function Navbar({ user }: NavbarProps) {
               fontWeight: 800,
               textDecoration: 'none',
               transition: 'all 180ms ease',
-              color: 'var(--text-2)'
+              background: isFeaturesActive ? 'rgba(37,99,235,0.14)' : 'transparent',
+              color: isFeaturesActive ? 'var(--brand)' : 'var(--text-2)',
+              border: isFeaturesActive ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent',
+              boxShadow: isFeaturesActive ? '0 2px 10px rgba(37,99,235,0.15)' : 'none'
             }}
           >
-            <SparklesIcon size={15} color="currentColor" />
+            <SparklesIcon size={15} color={isFeaturesActive ? 'var(--brand)' : 'currentColor'} />
             <span>Features</span>
           </Link>
 
@@ -210,12 +246,13 @@ export default function Navbar({ user }: NavbarProps) {
                 fontWeight: 800,
                 textDecoration: 'none',
                 transition: 'all 180ms ease',
-                background: pathname === '/dashboard' ? 'rgba(37,99,235,0.12)' : 'transparent',
-                color: pathname === '/dashboard' ? 'var(--brand)' : 'var(--text-2)',
-                border: pathname === '/dashboard' ? '1px solid rgba(37,99,235,0.25)' : '1px solid transparent'
+                background: isDashboardActive ? 'rgba(37,99,235,0.14)' : 'transparent',
+                color: isDashboardActive ? 'var(--brand)' : 'var(--text-2)',
+                border: isDashboardActive ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent',
+                boxShadow: isDashboardActive ? '0 2px 10px rgba(37,99,235,0.15)' : 'none'
               }}
             >
-              <LayoutDashboardIcon size={15} color={pathname === '/dashboard' ? 'var(--brand)' : 'currentColor'} />
+              <LayoutDashboardIcon size={15} color={isDashboardActive ? 'var(--brand)' : 'currentColor'} />
               <span>Dashboard</span>
             </Link>
           )}
@@ -453,22 +490,22 @@ export default function Navbar({ user }: NavbarProps) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Link
               href="/"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={handleTransferClick}
               style={{
                 padding: '10px 14px',
                 borderRadius: 12,
-                color: 'var(--text-1)',
+                color: isTransferActive ? 'var(--brand)' : 'var(--text-1)',
                 textDecoration: 'none',
                 fontWeight: 800,
                 fontSize: '0.92rem',
-                background: pathname === '/' ? 'rgba(37,99,235,0.12)' : 'var(--glass-bg-subtle)',
-                border: pathname === '/' ? '1px solid rgba(37,99,235,0.25)' : '1px solid var(--border)',
+                background: isTransferActive ? 'rgba(37,99,235,0.12)' : 'var(--glass-bg-subtle)',
+                border: isTransferActive ? '1px solid rgba(37,99,235,0.25)' : '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10
               }}
             >
-              <UploadCloudIcon size={18} color="var(--brand)" />
+              <UploadCloudIcon size={18} color={isTransferActive ? 'var(--brand)' : 'currentColor'} />
               <span>Transfer Files (10GB Free)</span>
             </Link>
 
@@ -478,22 +515,22 @@ export default function Navbar({ user }: NavbarProps) {
               style={{
                 padding: '10px 14px',
                 borderRadius: 12,
-                color: 'var(--text-1)',
+                color: isPricingActive ? 'var(--brand)' : 'var(--text-1)',
                 textDecoration: 'none',
                 fontWeight: 800,
                 fontSize: '0.92rem',
-                background: pathname === '/pricing' ? 'rgba(37,99,235,0.12)' : 'var(--glass-bg-subtle)',
-                border: pathname === '/pricing' ? '1px solid rgba(37,99,235,0.25)' : '1px solid var(--border)',
+                background: isPricingActive ? 'rgba(37,99,235,0.12)' : 'var(--glass-bg-subtle)',
+                border: isPricingActive ? '1px solid rgba(37,99,235,0.25)' : '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <DiamondIcon size={18} color="var(--brand)" />
+                <DiamondIcon size={18} color={isPricingActive ? 'var(--brand)' : 'currentColor'} />
                 <span>Pricing & Storage Plans</span>
               </div>
-              <span style={{ padding: '2px 7px', borderRadius: 999, background: 'rgba(37,99,235,0.15)', color: 'var(--brand)', fontSize: '0.72rem', fontWeight: 800 }}>10GB FREE</span>
+              <span style={{ padding: '2px 7px', borderRadius: 999, background: isPricingActive ? 'var(--brand)' : 'rgba(37,99,235,0.15)', color: isPricingActive ? '#ffffff' : 'var(--brand)', fontSize: '0.72rem', fontWeight: 800 }}>10GB FREE</span>
             </Link>
 
             <Link
@@ -502,18 +539,18 @@ export default function Navbar({ user }: NavbarProps) {
               style={{
                 padding: '10px 14px',
                 borderRadius: 12,
-                color: 'var(--text-1)',
+                color: isFeaturesActive ? 'var(--brand)' : 'var(--text-1)',
                 textDecoration: 'none',
                 fontWeight: 800,
                 fontSize: '0.92rem',
-                background: 'var(--glass-bg-subtle)',
-                border: '1px solid var(--border)',
+                background: isFeaturesActive ? 'rgba(37,99,235,0.12)' : 'var(--glass-bg-subtle)',
+                border: isFeaturesActive ? '1px solid rgba(37,99,235,0.25)' : '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10
               }}
             >
-              <SparklesIcon size={18} color="var(--brand)" />
+              <SparklesIcon size={18} color={isFeaturesActive ? 'var(--brand)' : 'currentColor'} />
               <span>Features & Encryption</span>
             </Link>
 
@@ -529,14 +566,14 @@ export default function Navbar({ user }: NavbarProps) {
                     gap: 10,
                     padding: '10px 14px',
                     borderRadius: 12,
-                    background: 'var(--glass-bg-subtle)',
-                    border: '1px solid var(--border)',
+                    background: isDashboardActive ? 'rgba(37,99,235,0.12)' : 'var(--glass-bg-subtle)',
+                    border: isDashboardActive ? '1px solid rgba(37,99,235,0.25)' : '1px solid var(--border)',
                     textDecoration: 'none',
-                    color: 'var(--text-1)',
+                    color: isDashboardActive ? 'var(--brand)' : 'var(--text-1)',
                     fontWeight: 800
                   }}
                 >
-                  <LayoutDashboardIcon size={18} color="var(--brand)" />
+                  <LayoutDashboardIcon size={18} color={isDashboardActive ? 'var(--brand)' : 'currentColor'} />
                   <span>Dashboard ({displayName})</span>
                 </Link>
 
@@ -549,14 +586,14 @@ export default function Navbar({ user }: NavbarProps) {
                     gap: 10,
                     padding: '10px 14px',
                     borderRadius: 12,
-                    background: 'var(--glass-bg-subtle)',
-                    border: '1px solid var(--border)',
+                    background: pathname === '/settings' ? 'rgba(37,99,235,0.12)' : 'var(--glass-bg-subtle)',
+                    border: pathname === '/settings' ? '1px solid rgba(37,99,235,0.25)' : '1px solid var(--border)',
                     textDecoration: 'none',
-                    color: 'var(--text-1)',
+                    color: pathname === '/settings' ? 'var(--brand)' : 'var(--text-1)',
                     fontWeight: 800
                   }}
                 >
-                  <SettingsIcon size={18} color="var(--brand)" />
+                  <SettingsIcon size={18} color={pathname === '/settings' ? 'var(--brand)' : 'currentColor'} />
                   <span>Settings & Security</span>
                 </Link>
 
@@ -570,14 +607,14 @@ export default function Navbar({ user }: NavbarProps) {
                       gap: 10,
                       padding: '10px 14px',
                       borderRadius: 12,
-                      background: 'var(--glass-bg-subtle)',
-                      border: '1px solid var(--border)',
+                      background: pathname === '/admin' ? 'rgba(37,99,235,0.12)' : 'var(--glass-bg-subtle)',
+                      border: pathname === '/admin' ? '1px solid rgba(37,99,235,0.25)' : '1px solid var(--border)',
                       textDecoration: 'none',
-                      color: 'var(--text-1)',
+                      color: pathname === '/admin' ? 'var(--brand)' : 'var(--text-1)',
                       fontWeight: 800
                     }}
                   >
-                    <ShieldLockIcon size={18} color="var(--brand)" />
+                    <ShieldLockIcon size={18} color={pathname === '/admin' ? 'var(--brand)' : 'currentColor'} />
                     <span>Admin Telemetry</span>
                   </Link>
                 )}
